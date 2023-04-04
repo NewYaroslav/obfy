@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/fritzone/obfy.svg?branch=master)](https://travis-ci.org/fritzone/obfy)
 
+**This version of the library differs from the original in that it has improved compatibility with other libraries by changing macro names. The original library caused name conflicts when used together with the Eigen library.**
+
 # Attacking the licensing problems with C++
 
 From the early days of the commercialization of computer software, malicious programmers, also known as crackers have been continuously nettling the programmers of aforementioned software by constantly bypassing the clever licensing mechanisms they have implemented in their software, thus causing financial damages to the companies providing the software.
@@ -138,37 +140,37 @@ The basic usage of the framework boils down to including the header file providi
 #include "instr.h"`
 ```
 
-then using the macro pair `OBF_BEGIN` and `OBF_END` as delimiters of the code sequences that will be using obfuscated expressions.
+then using the macro pair `OBFY_BEGIN_CODE` and `OBFY_END_CODE` as delimiters of the code sequences that will be using obfuscated expressions.
 
-For a more under the hood view of the framework, the `OBF_BEGIN` and `OBF_END` macros declare a `try`-`catch` block, which has support for returning values from the obfuscated current code sequence, and also provides support for basic control flow modifications such as the usage of `continue` and `break` emulator macros `CONTINUE` and `BREAK`.
+For a more under the hood view of the framework, the `OBFY_BEGIN_CODE` and `OBFY_END_CODE` macros declare a `try`-`catch` block, which has support for returning values from the obfuscated current code sequence, and also provides support for basic control flow modifications such as the usage of `continue` and `break` emulator macros `CONTINUE` and `BREAK`.
 
-#### Behind the scenes: `OBF_BEGIN` and `OBF_END`
+#### Behind the scenes: `OBFY_BEGIN_CODE` and `OBFY_END_CODE`
 
-`OBF_BEGIN` expands to:
-
-```
-#define OBF_BEGIN try { obf::next_step __crv = obf::next_step::ns_done; std::shared_ptr<obf::base_rvholder> __rvlocal;
-```
-
-and `OBF_END` becomes:
+`OBFY_BEGIN_CODE` expands to:
 
 ```
-#define OBF_END } catch(std::shared_ptr<obf::base_rvholder>& r) { return *r; } catch (...) {throw;}
+#define OBFY_BEGIN_CODE try { obfy::next_step __crv = obfy::next_step::ns_done; std::shared_ptr<obfy::base_rvholder> __rvlocal;
 ```
 
-In order to support for "return"-ing a value from the current obfuscated block we need a special variable `__rvlocal`. At later stages this value will be populated with meaningful values as a result of executing the code of the `RETURN` macro (which will "throw" a value with type of `std::shared_ptr<obf::base_rvholder>`). The `OBF_END` will catch this specific value and handle it appropriately, while all other values thrown will be re-thrown in order to not to disturb the client code's exception handling.
+and `OBFY_END_CODE` becomes:
+
+```
+#define OBFY_END_CODE } catch(std::shared_ptr<obfy::base_rvholder>& r) { return *r; } catch (...) {throw;}
+```
+
+In order to support for "return"-ing a value from the current obfuscated block we need a special variable `__rvlocal`. At later stages this value will be populated with meaningful values as a result of executing the code of the `RETURN` macro (which will "throw" a value with type of `std::shared_ptr<obfy::base_rvholder>`). The `OBFY_END_CODE` will catch this specific value and handle it appropriately, while all other values thrown will be re-thrown in order to not to disturb the client code's exception handling.
 
 #### Value and numerical wrappers
 
-To achieve an extra layer of obfuscation, the integral numerical values can be wrapped in the macro `N()` and all integral numeric variables (`int`, `long`, ...) can be wrapped in the macro `V()` to provide an extra layer of obfuscation for doing the calculation operations. The `V()` value wrapper also can wrap individual array elements(`x[2]`), but not arrays (`x`) and also cannot wrap class instantiation values due to the fact that the macro expands to a reference holder object.
+To achieve an extra layer of obfuscation, the integral numerical values can be wrapped in the macro `N()` and all integral numeric variables (`int`, `long`, ...) can be wrapped in the macro `OBFY_V()` to provide an extra layer of obfuscation for doing the calculation operations. The `OBFY_V()` value wrapper also can wrap individual array elements(`x[2]`), but not arrays (`x`) and also cannot wrap class instantiation values due to the fact that the macro expands to a reference holder object.
 
 The implementation of the wrappers uses the link time random number generator provided by [Andrivet] and the values are obfuscated by performing various operations to hide the original value.
 
 And here is an example for using the value and variable wrappers:
 
 ```cpp
-int a, b = N(6);
-V(a) = N(1);
+int a, b = OBFY_N(6);
+OBFY_V(a) = OBFY_N(1);
 ```
 
 After executing the statement above, the value of `a` will be 1.
@@ -181,9 +183,9 @@ As the name implies, the value wrappers will wrap values by offering a behaviour
 
 ```cpp
     const char* t = "ABC";
-    if( V(t[1]) == 'B')
+    if( OBFY_V(t[1]) == 'B')
     {
-        V( t[1] ) = 'D';
+        OBFY_V( t[1] ) = 'D';
     }
 ```
 
@@ -191,9 +193,9 @@ And the following
 
 ```cpp
     char* t = "ABC";
-    if( V(t[1]) == 'B')
+    if( OBFY_V(t[1]) == 'B')
     {
-        V( t[1] ) = 'D';
+        OBFY_V( t[1] ) = 'D';
     }
 ```
 
@@ -201,15 +203,15 @@ will be undefined behaviour because the compiler highly probably will allocate t
 
 ##### Behind the scenes of the implementation of the numeric wrapping
 
-The `N` macro is defined like the following:
+The `OBFY_N` macro is defined like the following:
 
 ```cpp
-#define N(a) (obf::Num<decltype(a), obf::MetaRandom<__COUNTER__, 4096>::value ^ a>().get() ^ obf::MetaRandom<__COUNTER__ - 1, 4096>::value)
+#define OBFY_N(a) (obfy::Num<decltype(a), obfy::MetaRandom<__COUNTER__, 4096>::value ^ a>().get() ^ obfy::MetaRandom<__COUNTER__ - 1, 4096>::value)
 ```
 
-As a first step let's consider that due to the implementation of [Andrivet] and the (more or less standard) `__COUNTER__` macro the `obf::MetaRandom<__COUNTER__, 4096>::value` and `obf::MetaRandom<__COUNTER__ - 1, 4096>::value)` will have the same value.
+As a first step let's consider that due to the implementation of [Andrivet] and the (more or less standard) `__COUNTER__` macro the `obfy::MetaRandom<__COUNTER__, 4096>::value` and `obfy::MetaRandom<__COUNTER__ - 1, 4096>::value)` will have the same value.
 
-Now, taking the `obf::Num` class in the visor:
+Now, taking the `obfy::Num` class in the visor:
 
 ```cpp
 template<typename T, T n> class Num final
@@ -231,17 +233,17 @@ Where the iteration of the templates is finalized by:
 ```cpp
 struct ObfZero { enum {value = 0}; };
 struct ObfOne { enum {value = 1}; };
-#define OBF_ZERO(t) template <> struct Num<t,0> final : public ObfZero { t v = value; };
-#define OBF_ONE(t) template <> struct Num<t,1> final : public ObfOne { t v = value; };
-#define OBF_TYPE(t) OBF_ZERO(t) OBF_ONE(t)
-OBF_TYPE(int) // And for all the other integral types
+#define OBFY_ZERO(t) template <> struct Num<t,0> final : public ObfZero { t v = value; };
+#define OBFY_ONE(t) template <> struct Num<t,1> final : public ObfOne { t v = value; };
+#define OBFY_TYPE(t) OBFY_ZERO(t) OBFY_ONE(t)
+OBFY_TYPE(int) // And for all the other integral types
 ```
 
 The `Num` class tries to add some protection by adding some extra xor operations to the usage of a simple number, thus turning a simple numeric assignment into several steps of assembly code (Visual Studio 2015 generated the following code in Release With Debug Info mode):
 
 ```cpp
     int n;
-    OBF_BEGIN
+    OBFY_BEGIN_CODE
        n = N(42);
 002A5F74  mov         dword ptr [ebp-4],0  
 002A5F7B  mov         dword ptr [ebp-4],78Ch  
@@ -250,7 +252,7 @@ The `Num` class tries to add some protection by adding some extra xor operations
 002A5F8A  mov         dword ptr [ebp-4],eax  
 002A5F8D  mov         eax,dword ptr [ebp-4]  
 002A5F90  xor         eax,929h  
-    OBF_END
+    OBFY_END_CODE
 ```
 
 However, please note the several `volatile` variables ... which are required in order to circumvent todays' extremely clever optimizing compilers. If we remove the `volatile` from the variables, the compiler is clever enough to guess the value I wanted to obfuscate, so ... there goes the obfuscation.
@@ -260,11 +262,11 @@ However, please note the several `volatile` variables ... which are required in 
 In case of not building the code in debugging mode, the macro `V` expands to the following C++ nightmare:
 
 ```cpp
-#define MAX_BOGUS_IMPLEMENTATIONS 3
+#define OBFY_MAX_BOGUS_IMPLEMENTATIONS 3
 
-#define V(a) ([&]() {obf::extra_chooser<std::remove_reference<decltype(a)>::type, obf::MetaRandom<__COUNTER__, \
-            MAX_BOGUS_IMPLEMENTATIONS>::value >::type _JOIN(_ec_,__COUNTER__)(a);\
-            return obf::stream_helper();}() << a)
+#define OBFY_V(a) ([&]() {obfy::extra_chooser<std::remove_reference<decltype(a)>::type, obfy::MetaRandom<__COUNTER__, \
+            OBFY_MAX_BOGUS_IMPLEMENTATIONS>::value >::type _JOIN(_ec_,__COUNTER__)(a);\
+            return obfy::stream_helper();}() << a)
 ```
 
 So let's dissect it in order to understand the underlying operations.
@@ -282,11 +284,11 @@ class extra_chooser
 And is helped by the following constructs:
 
 ```cpp
-#define DEFINE_EXTRA(N,implementer) template <typename T> struct extra_chooser<T,N> { using type = implementer<T>; }
+#define OBFY_DEFINE_EXTRA(N,implementer) template <typename T> struct extra_chooser<T,N> { using type = implementer<T>; }
 
-DEFINE_EXTRA(0, extra_xor);
-DEFINE_EXTRA(1, extra_substraction);
-DEFINE_EXTRA(2, extra_addition);
+OBFY_DEFINE_EXTRA(0, extra_xor);
+OBFY_DEFINE_EXTRA(1, extra_substraction);
+OBFY_DEFINE_EXTRA(2, extra_addition);
 ```
 
 Which is the actual definition of the classes for the extra operations, which in their turn look like:
@@ -315,12 +317,12 @@ Where the extra addition and substraction are also very similar.
 The next thing we observe is that an object of this kind (ie. extra bogus operation chooser) is defined in a lambda function for the variable we are wrapping. The variable name for this is determined by `_JOIN(_ec_,__COUNTER__)(a)`, where `_JOIN` is just a simple joiner macro:
 
 ```cpp
-#define _JOIN(a,b) a##b
+#define OBFY_JOIN(a,b) a##b
 ```
 
-Upon creation and destruction of this `extra_chooser` object the value of the object will remain unchanged, however extra code will be generated by the compiler (thanks to the numerous `volatile` modifiers found in the extra operation classes, otherwise the compiler would "cheat" again and just "skip" our obfuscation). This is actually an extensible interface, so if you define your own class for bogus operation and use the `DEFINE_EXTRA` macro (and increase the `MAX_BOGUS_IMPLEMENTATIONS`) you can use it too.
+Upon creation and destruction of this `extra_chooser` object the value of the object will remain unchanged, however extra code will be generated by the compiler (thanks to the numerous `volatile` modifiers found in the extra operation classes, otherwise the compiler would "cheat" again and just "skip" our obfuscation). This is actually an extensible interface, so if you define your own class for bogus operation and use the `OBFY_DEFINE_EXTRA` macro (and increase the `OBFY_MAX_BOGUS_IMPLEMENTATIONS`) you can use it too.
 
-Now, back to the lambda, because it plays an important role. The lambda returns an object of type `obf::stream_helper()` which is basically an empty class (`class stream_helper {};`), but the role of the lambda is still not done. As we can see in the macro, the lambda is executed and into its result (ie. the `obf::stream_helper()` object) we stream in the parameter of the macro (`<< a`). This gives the control to the following operator:
+Now, back to the lambda, because it plays an important role. The lambda returns an object of type `obfy::stream_helper()` which is basically an empty class (`class stream_helper {};`), but the role of the lambda is still not done. As we can see in the macro, the lambda is executed and into its result (ie. the `obfy::stream_helper()` object) we stream in the parameter of the macro (`<< a`). This gives the control to the following operator:
 
 ```cpp
 template <typename T>
@@ -348,10 +350,10 @@ public:
 
     bool operator == (const T& ov) { return !(v ^ ov); }
     bool operator != (const T& ov) { return !operator ==(ov); }
-    COMPARISON_OPERATOR(>=)
-    COMPARISON_OPERATOR(<=)
-    COMPARISON_OPERATOR(>)
-    COMPARISON_OPERATOR(<)
+    OBFY_COMPARISON_OPERATOR(>=)
+    OBFY_COMPARISON_OPERATOR(<=)
+    OBFY_COMPARISON_OPERATOR(>)
+    OBFY_COMPARISON_OPERATOR(<)
 
     operator T() {return v;}
 
@@ -361,16 +363,16 @@ public:
     refholder<T> operator++(int) { refholder<T> rv(*this); operator ++(); return rv; }
     refholder<T> operator--(int) { refholder<T> rv(*this); operator --(); return rv; }
 
-    COMP_ASSIGNMENT_OPERATOR(+)
-    COMP_ASSIGNMENT_OPERATOR(-)
-    COMP_ASSIGNMENT_OPERATOR(*)
-    COMP_ASSIGNMENT_OPERATOR(/)
-    COMP_ASSIGNMENT_OPERATOR(%)
-    COMP_ASSIGNMENT_OPERATOR(<<)
-    COMP_ASSIGNMENT_OPERATOR(>>)
-    COMP_ASSIGNMENT_OPERATOR(&)
-    COMP_ASSIGNMENT_OPERATOR(|)
-    COMP_ASSIGNMENT_OPERATOR(^)
+    OBFY_COMP_ASSIGNMENT_OPERATOR(+)
+    OBFY_COMP_ASSIGNMENT_OPERATOR(-)
+    OBFY_COMP_ASSIGNMENT_OPERATOR(*)
+    OBFY_COMP_ASSIGNMENT_OPERATOR(/)
+    OBFY_COMP_ASSIGNMENT_OPERATOR(%)
+    OBFY_COMP_ASSIGNMENT_OPERATOR(<<)
+    OBFY_COMP_ASSIGNMENT_OPERATOR(>>)
+    OBFY_COMP_ASSIGNMENT_OPERATOR(&)
+    OBFY_COMP_ASSIGNMENT_OPERATOR(|)
+    OBFY_COMP_ASSIGNMENT_OPERATOR(^)
 
 private:
     volatile T& v;
@@ -383,7 +385,7 @@ So, here comes a piece of generated assembly code for a very simple expression:
 
 ```cpp
     int n;
-    OBF_BEGIN
+    OBFY_BEGIN_CODE
         V(n) = N(42);
 00048466  mov         dword ptr [ebp-8],0  
 0004846D  mov         dword ptr [ebp-8],97Ch  
@@ -402,12 +404,12 @@ So, here comes a piece of generated assembly code for a very simple expression:
 0004849F  push        dword ptr [ebp-8]  
 000484A2  lea         eax,[ebp-0Ch]  
 000484A5  push        eax  
-000484A6  call        obf::operator<<<int> (0414C9h)  
+000484A6  call        obfy::operator<<<int> (0414C9h)  
 000484AB  add         esp,0Ch  
 000484AE  xor         esi,492h  
 000484B4  mov         eax,dword ptr [eax]  
 000484B6  mov         dword ptr [eax],esi  
-    OBF_END
+    OBFY_END_CODE
 ```
 
 The sheer amount of extra code generated for a simple assignment is simply overwhelming.
@@ -424,28 +426,28 @@ When there is a need in the application to take a decision based on the value of
 
 ##### The `IF` statement
 
-For checking the true-ness of an expression the framework offers the `IF` macro which has the following form:
+For checking the true-ness of an expression the framework offers the `OBFY_IF` macro which has the following form:
 
-    IF (expression)
+    OBFY_IF (expression)
     ....statements
-    ELSE
+    OBFY_ELSE
     ....other statements
-    ENDIF
+    OBFY_ENDIF
 
-where the `ELSE` is not mandatory, but the `ENDIF` is, since it indicates the end of the `IF` blocks' statements.
+where the `OBFY_ELSE` is not mandatory, but the `OBFY_ENDIF` is, since it indicates the end of the `OBFY_IF` blocks' statements.
 
-And here is an example for the usage of the `IF` macro.
+And here is an example for the usage of the `OBFY_IF` macro.
 
 ```cpp
-IF( V(a) == N(9) )
-     V(b) = a + N(5);
-ELSE
-     V(a) = N(9);
-     V(b) = a + b;
-ENDIF
+OBFY_IF( OBFY_V(a) == OBFY_N(9) )
+     OBFY_V(b) = a + OBFY_N(5);
+OBFY_ELSE
+     OBFY_V(a) = OBFY_N(9);
+     OBFY_V(b) = a + b;
+OBFY_ENDIF
 ```
 
-Due to the way the `IF` macro is defined, it is not required to create a new scope between the `IF` and `ENDIF`, it is automatically defined and all variables declared in the statements between `IF` and `ENDIF` are destroyed.
+Due to the way the `OBFY_IF` macro is defined, it is not required to create a new scope between the `OBFY_IF` and `OBFY_ENDIF`, it is automatically defined and all variables declared in the statements between `OBFY_IF` and `OBFY_ENDIF` are destroyed.
 
 Since the evaluation of the `expression` is bound to the execution of a hidden (well at least from the outer world) lambda unfortunately it is not possible to declare variables in the `expression` so the following expression:
 
@@ -453,50 +455,50 @@ Since the evaluation of the `expression` is bound to the execution of a hidden (
 
 is not valid, and will yield a compiler error. This is partially intentional, since it gives that extra layer of obfuscation required to hide the operations done on a variable in a nameless lambda somewhere deep in the code.
 
-In case the debugging mode is active, the `IF`-`ELSE`-`ENDIF` macros are defined to expand to the following statements:
+In case the debugging mode is active, the `OBFY_IF`-`OBFY_ELSE`-`OBFY_ENDIF` macros are defined to expand to the following statements:
 
 ```cpp
-#define IF(x)  if(x) {
-#define ELSE   } else {
-#define ENDIF  }
+#define OBFY_IF(x)  if(x) {
+#define OBFY_ELSE   } else {
+#define OBFY_ENDIF  }
 ```
 
 ##### Implementation of the `IF` construct
 
-The `IF` macro expands to the following:
+The `OBFY_IF` macro expands to the following:
 
 ```
-#define IF(x) {std::shared_ptr<obf::base_rvholder> __rvlocal; obf::if_wrapper(( [&]()->bool{ return (x); })).set_then( [&]() {
+#define OBFY_IF(x) {std::shared_ptr<obfy::base_rvholder> __rvlocal; obfy::if_wrapper(( [&]()->bool{ return (x); })).set_then( [&]() {
 ```
 
-the `ELSE` macro exopands to:
+the `OBFY_ELSE` macro exopands to:
 
 ```
-#define ELSE return __crv;}).set_else( [&]() {
+#define OBFY_ELSE return __crv;}).set_else( [&]() {
 ```
 
-and the `ENDIF` will give:
+and the `OBFY_ENDIF` will give:
 
 ```
-#define ENDIF return __crv;}).run(); }
+#define OBFY_ENDIF return __crv;}).run(); }
 ```
 
 so to wrap up all, the following code:
 
 ```cpp
-IF( n == 42)
+OBFY_IF( n == 42)
     n = 43;
-ELSE
+OBFY_ELSE
     n = 44;
-ENDIF
+OBFY_ENDIF
 ```
 
 will expand to
 
 ```cpp
 {
-    std::shared_ptr<obf::base_rvholder> __rvlocal; 
-    obf::if_wrapper( ([&]()->bool
+    std::shared_ptr<obfy::base_rvholder> __rvlocal; 
+    obfy::if_wrapper( ([&]()->bool
     { 
         return (n == 42); 
     }) )
@@ -587,20 +589,20 @@ There is a time when every application needs to iterate over a set of values, so
 
 The macro provided to imitate the `for` statement is:
 
-    FOR(initializer, condition, incrementer)
+    OBFY_FOR(initializer, condition, incrementer)
     .... statements
-    ENDFOR`
+    OBFY_ENDFOR`
 
-Please note, that since `FOR` is a macro, it should use `,` (comma) not the traditional `;` which is used in the standard C++ `for` loops, and do not forget to include your `initializer`, `condition` and `incrementer` in parentheses if they are expressions which have `,` (comma) in them.
+Please note, that since `OBFY_FOR` is a macro, it should use `,` (comma) not the traditional `;` which is used in the standard C++ `for` loops, and do not forget to include your `initializer`, `condition` and `incrementer` in parentheses if they are expressions which have `,` (comma) in them.
 
-The `FOR` loops should be ended with and `ENDFOR` statement to signal the end of the structure.
+The `OBFY_FOR` loops should be ended with and `OBFY_ENDFOR` statement to signal the end of the structure.
 
-Here is a simple example for the `FOR` loop.
+Here is a simple example for the `OBFY_FOR` loop.
 
 ```cpp
-FOR(V(a) = N(0), V(a) < N(10), V(a) += 1)
-   std::cout << V(a) << std::endl;
-ENDFOR
+OBFY_FOR(V(a) = OBFY_N(0), OBFY_V(a) < OBFY_N(10), OBFY_V(a) += 1)
+   std::cout << OBFY_V(a) << std::endl;
+OBFY_ENDFOR
 ```
 
 The same restriction concerning the variable declaration in the `initializer` as in the case of the `IF` applies for the FOR macro too, so it is not valid to write:
@@ -612,8 +614,8 @@ and the reasons are again the same as presented above.
 In case of a debugging session the `FOR`-`ENDFOR` macros expand to the following:
 
 ```cpp
-#define FOR(init,cond,inc) for(init;cond;inc) {
-#define ENDFOR }
+#define OBFY_FOR(init,cond,inc) for(init;cond;inc) {
+#define OBFY_ENDFOR }
 ```
 
 ##### The `WHILE` loop
@@ -629,46 +631,46 @@ The while loop has the same characteristics as the `IF` construct and behaves th
 Here is an example for the `WHILE`:
 
 ```cpp
-    V(a) = 1;
-    WHILE( V(a)  < N(10) )
+    OBFY_V(a) = 1;
+    OBFY_WHILE( OBFY_V(a)  < OBFY_N(10) )
         std::cout << "IN:" << a<< std::endl;
-        V(a) += N(1);
-    ENDWHILE
+        OBFY_V(a) += OBFY_N(1);
+    OBFY_ENDWHILE
 ```
 
-Unfortunately the `WHILE` loop also has the same restrictions as the `IF`: you cannot declare a variable in its condition.
+Unfortunately the `OBFY_WHILE` loop also has the same restrictions as the `OBFY_IF`: you cannot declare a variable in its condition.
 
-In case the compilation is done in debugging mode, the `WHILE` evaluates to:
+In case the compilation is done in debugging mode, the `OBFY_WHILE` evaluates to:
 
 ```cpp
-#define WHILE(x) while(x) {
-#define ENDWHILE }
+#define OBFY_WHILE(x) while(x) {
+#define OBFY_ENDWHILE }
 ```
 
 ##### The `REPEAT` - `AS_LONG_AS` construct posing as `do` - `while`
 
-Due to the complexity of the solution, the familiar `do` - `while` construct of the C++ language had to be renamed a bit, since the `WHILE` "keyword" was already taken for the benefit of the `while` loop, so I created the `REPEAT` - `AS_LONG_AS` keywords to achieve this goal.
+Due to the complexity of the solution, the familiar `do` - `while` construct of the C++ language had to be renamed a bit, since the `OBFY_WHILE` "keyword" was already taken for the benefit of the `while` loop, so I created the `OBFY_REPEAT` - `OBFY_AS_LONG_AS` keywords to achieve this goal.
 
-This is the syntax of the `REPEAT` - `AS_LONG_AS` construct:
+This is the syntax of the `OBFY_REPEAT` - `OBFY_AS_LONG_AS` construct:
 
-    REPEAT
+    OBFY_REPEAT
     ....statements
-    AS_LONG_AS( expression )
+    OBFY_AS_LONG_AS( expression )
 
 This will execute the `statements` at least once, and then depending on the value of the `expression` either will continue the execution, or will stop and exit the loop. If the expression is `true` it will continue the execution from the beginning of the loop, if it is `false` it will stop the execution and exit the loop.
 
 And here is an example:
 
-    REPEAT
+    OBFY_REPEAT
         std::cout << a << std::endl;
-        ++ V(a);
-    AS_LONG_AS( V(a) != N(12) )
+        ++ OBFY_V(a);
+    OBFY_AS_LONG_AS( OBFY_V(a) != OBFY_N(12) )
 
-In case of debugging, the  `REPEAT` - `AS_LONG_AS` construct expands to the following:
+In case of debugging, the  `OBFY_REPEAT` - `OBFY_AS_LONG_AS` construct expands to the following:
 
 ```cpp
-#define REPEAT   do {
-#define AS_LONG_AS(x) } while (x);
+#define OBFY_REPEAT   do {
+#define OBFY_AS_LONG_AS(x) } while (x);
 ```
 
 ##### Implementation of the looping constructs
@@ -701,79 +703,79 @@ Sometimes there is a need to alter the execution flow of a loop, C++ has support
 
 ##### The `CONTINUE` statement
 
-The `CONTINUE` statement will skip all statements that follow him in the body of the loop, thus altering the flow of the application.
+The `OBFY_CONTINUE` statement will skip all statements that follow him in the body of the loop, thus altering the flow of the application.
 
-Here is an example for the `CONTINUE` used in a `FOR` loop:
+Here is an example for the `OBFY_CONTINUE` used in a `OBFY_FOR` loop:
 
 ```cpp
-FOR(a = 0, a < 5, a++)
+OBFY_FOR(a = 0, a < 5, a++)
    std::cout << "counter before=" << a << std::endl;
-   IF(a == 2)
-        CONTINUE
-   ENDIF
+   OBFY_IF(a == 2)
+        OBFY_CONTINUE
+   OBFY_ENDIF
    std::cout << "counter after=" << a << std::endl;
-ENDFOR
+OBFY_ENDFOR
 ```
 
-and the equivalent `WHILE` loop:
+and the equivalent `OBFY_WHILE` loop:
 
 ```cpp
 a = 0;
-WHILE(a < 5)
+OBFY_WHILE(a < 5)
     std::cout << "counter before=" << a << std::endl;
-    IF(a == 2)
+    OBFY_IF(a == 2)
          a++;
-         CONTINUE
-    ENDIF
+         OBFY_CONTINUE
+    OBFY_ENDIF
     std::cout << "counter after=" << a << std::endl;
     a++;
-ENDFOR
+OBFY_ENDFOR
 ```
 
 Neither of these should print out the `counter after=2` text.
 
 ##### The `BREAK` statement
 
-The `BREAK` statement terminates the loop statement it resides in and transfers execution to the statement immediately following the loop.
+The `OBFY_BREAK` statement terminates the loop statement it resides in and transfers execution to the statement immediately following the loop.
 
-Here is an example for the `BREAK` statement used in a `FOR` loop:
+Here is an example for the `OBFY_BREAK` statement used in a `OBFY_FOR` loop:
 
 ```cpp
-FOR(a = 0, a < 10, a++)
+OBFY_FOR(a = 0, a < 10, a++)
    std::cout << "counter=" << a << std::endl;
-   IF(a == 1)
-        BREAK
-   ENDIF
-ENDFOR
+   OBFY_IF(a == 1)
+        OBFY_BREAK
+   OBFY_ENDIF
+OBFY_ENDFOR
 ```
 
-This loop will print `counter=0` and `counter=1` then it will leave the body of the loop, continuing the execution after the `ENDFOR`.
+This loop will print `counter=0` and `counter=1` then it will leave the body of the loop, continuing the execution after the `OBFY_ENDFOR`.
 
 ##### The `RETURN` statement
 
-As expected, the `RETURN` statement returns the execution of the current function and will return the specified value to the caller function. Here is an example of returning 42 from a function:
+As expected, the `OBFY_RETURN` statement returns the execution of the current function and will return the specified value to the caller function. Here is an example of returning 42 from a function:
 
 ```cpp
 int some_fun()
 {
-    OBF_BEGIN
+    OBFY_BEGIN_CODE
 
-        RETURN(42)
+        OBFY_RETURN(42)
 
-    OBF_END
+    OBFY_END_CODE
 }
 ```
 
-With the introduction of `RETURN`, an important issue arose: The obfuscation framework does not support the usage of `void` functions. So the following code will not compile:
+With the introduction of `OBFY_RETURN`, an important issue arose: The obfuscation framework does not support the usage of `void` functions. So the following code will not compile:
 
 ```cpp
 void void_test(int& a)
 {
-    OBF_BEGIN
-        IF(V(a) == 42)
-            V(a) = 43;
-        ENDIF
-    OBF_END
+    OBFY_BEGIN_CODE
+        OBFY_IF(OBFY_V(a) == 42)
+            OBFY_V(a) = 43;
+        OBFY_ENDIF
+    OBFY_END_CODE
 }
 ```
 
@@ -784,17 +786,17 @@ This is a seemingly annoying feature, but it easily can be fixed by simply chang
 These keywords give the following when not compiled in debug mode:
 
 ```cpp
-#define BREAK __crv = obf::next_step::ns_break; throw __crv;
-#define CONTINUE __crv = obf::next_step::ns_continue; throw __crv;
+#define OBFY_BREAK __crv = obfy::next_step::ns_break; throw __crv;
+#define OBFY_CONTINUE __crv = obfy::next_step::ns_continue; throw __crv;
 
-#define RETURN(x) __rvlocal.reset(new obf::rvholder<std::remove_reference<decltype(x)>::type>(x,x));  throw __rvlocal;
+#define OBFY_RETURN(x) __rvlocal.reset(new obfy::rvholder<std::remove_reference<decltype(x)>::type>(x,x));  throw __rvlocal;
 ```
 
-`BREAK` and `CONTINUE` offer no surprises in the implementation and they comply to the expectation that has been formulated in the looping constructs: they throw a specific value, which is then caught in the local loop of the implementation, which handles it accordingly.
+`OBFY_BREAK` and `OBFY_CONTINUE` offer no surprises in the implementation and they comply to the expectation that has been formulated in the looping constructs: they throw a specific value, which is then caught in the local loop of the implementation, which handles it accordingly.
 
-However `RETURN` is a different kind of beast.
+However `OBFY_RETURN` is a different kind of beast.
 
-It initializes the `__rvlocal` (ie: local return value) to the returned value and then throws it for the `catch` which is to be found in the `OBF_END` macro, which in its turn handles it correctly. 
+It initializes the `__rvlocal` (ie: local return value) to the returned value and then throws it for the `catch` which is to be found in the `OBFY_END_CODE` macro, which in its turn handles it correctly. 
 
 As you can see, there are three evaluations of  the `x` macro parameter, in order to avoid unwanted behaviour from your application do not use expressions which might turn out to be dangerous, such as: `RETURN (x++);` which will give a three times increment to your variable and an undefined behaviour.
 
@@ -845,75 +847,75 @@ As you can see there is a redundant `equals` method in the base class, and this 
 
 When programming in c++ the `switch`-`case` statement comes handy when there is a need to avoid long chains of `if` statements. The obfuscation framework provides a similar construct, although not exactly a functional and syntactical copy of the original `switch`-`case` construct.
 
-Here is the `CASE` statement:
+Here is the `OBFY_CASE` statement:
 
-    CASE (<variable>)
-        WHEN(<value>) [OR WHEN(<other_value>)] DO
+    OBFY_CASE (<variable>)
+        OBFY_WHEN(<value>) [OBFY_OR OBFY_WHEN(<other_value>)] OBFY_DO
         ....statements
-        ....[BREAK]
-        DONE
-        [DEFAULT
+        ....[OBFY_BREAK]
+        OBFY_DONE
+        [OBFY_DEFAULT
         ....statements
-        DONE]
-    ENDCASE
+        OBFY_DONE]
+    OBFY_ENDCASE
 
 The functionality is very similar to the well known `switch`-`case` construct, the main differences are:
 
-1. It is possible to use non-numeric, non-constant values (variables and strings) for the `WHEN` due to the fact that all of the `CASE` statement is wrapped up in a templated, lambdaized well hidden from the outside world, construct. Be careful with this extra feature when using the debugging mode of the library because the `CASE` macro expands to the standard `case` keyword.
-2. It is possible to have multiple conditions for a `WHEN` label joined together with `OR`.
+1. It is possible to use non-numeric, non-constant values (variables and strings) for the `OBFY_WHEN` due to the fact that all of the `OBFY_CASE` statement is wrapped up in a templated, lambdaized well hidden from the outside world, construct. Be careful with this extra feature when using the debugging mode of the library because the `CASE` macro expands to the standard `case` keyword.
+2. It is possible to have multiple conditions for a `OBFY_WHEN` label joined together with `OBFY_OR`.
 
-The fall through behaviour of the `switch` construct which is familiar to c++ programmers was kept, so there is a need to put in a `BREAK` statement if you wish for the operation to stop after entering a branch.
+The fall through behaviour of the `switch` construct which is familiar to c++ programmers was kept, so there is a need to put in a `OBFY_BREAK` statement if you wish for the operation to stop after entering a branch.
 
-And here is an example for the `CASE` statement:
+And here is an example for the `OBFY_CASE` statement:
 
 ```cpp
     std::string something = "D";
     std::string something_else = "D";
-    CASE (something)
-        WHEN("A") OR WHEN("B") DO
+    OBFY_CASE (something)
+        OBFY_WHEN("A") OBFY_OR OBFY_WHEN("B") OBFY_DO
             std::cout <<"Hurra, something is " << something << std::endl;
-            BREAK;
-        DONE
-        WHEN("C") DO
+            OBFY_BREAK;
+        OBFY_DONE
+        OBFY_WHEN("C") OBFY_DO
             std::cout <<"Too bad, something is " << something << std::endl;
-            BREAK;
-        DONE
-        WHEN(something_else) DO
+            OBFY_BREAK;
+        OBFY_DONE
+        OBFY_WHEN(something_else) OBFY_DO
             std::cout <<"Interesting, something is " << something_else << std::endl;
-            BREAK;
-        DONE
-        DEFAULT
+            OBFY_BREAK;
+        OBFY_DONE
+        OBFY_DEFAULT
             std::cout << "something is neither A, B or C, but:" << something <<std::endl;
-        DONE
-    ENDCASE
+        OBFY_DONE
+    OBFY_ENDCASE
 ```
 In case the framework is used in debugging mode the macros expand to the following statements:
 
 ```cpp
-#define CASE(a) switch (a) {
-#define ENDCASE }
-#define WHEN(c) case c:
-#define DO {
-#define DONE }
-#define OR
-#define DEFAULT default:
+#define OBFY_CASE(a) switch (a) {
+#define OBFY_ENDCASE }
+#define OBFY_WHEN(c) case c:
+#define OBFY_DO {
+#define OBFY_DONE }
+#define OBFY_OR
+#define OBFY_DEFAULT default:
 ```
 
 ###### Implementation of the `CASE` construct
 
-Certainly, the most complex of all constructs is the `CASE` one. Just the amount of macros supporting it is huge:
+Certainly, the most complex of all constructs is the `OBFY_CASE` one. Just the amount of macros supporting it is huge:
 
 ```
-#define CASE(a) try { std::shared_ptr<obf::base_rvholder> __rvlocal;\
-                auto __avholder = a; obf::case_wrapper<std::remove_reference<decltype(a)>::type>(a).
-#define ENDCASE run(); } catch(obf::next_step& cv) {}
-#define WHEN(c) add_entry(obf::branch<std::remove_reference<decltype(__avholder)>::type>\
+#define OBFY_CASE(a) try { std::shared_ptr<obfy::base_rvholder> __rvlocal;\
+                auto __avholder = a; obfy::case_wrapper<std::remove_reference<decltype(a)>::type>(a).
+#define OBFY_ENDCASE run(); } catch(obfy::next_step& cv) {}
+#define OBFY_WHEN(c) add_entry(obfy::branch<std::remove_reference<decltype(__avholder)>::type>\
                 ( [&,__avholder]() -> std::remove_reference<decltype(__avholder)>::type \
                 { std::remove_reference<decltype(__avholder)>::type __c = (c); return __c;} )).
-#define DO add_entry( obf::body([&](){
-#define DONE return obf::next_step::ns_continue;})).
-#define OR join().
-#define DEFAULT add_default(obf::body([&](){
+#define OBFY_DO add_entry( obfy::body([&](){
+#define OBFY_DONE return obfy::next_step::ns_continue;})).
+#define OBFY_OR join().
+#define OBFY_DEFAULT add_default(obfy::body([&](){
 ```
 
 Let's dive into it.  
@@ -950,13 +952,13 @@ private:
 
 The `const CT check;` is the expression that is being checked for the various case branches. Please note the `add_entry` and `add_default` methods, together with the `join()` method which allow chaining of expressions and method calls on the same object. The `std::vector<const case_instruction*> steps;` is a cumulative container for all the branch condition expressions and also bodies (code which is executed in a branch). This will introduce more complex code at a later stage, however it was necessary to have these two joined in the same container in order to allow as similar behaviour to the original way the C++ `case` works, as possible.
 
-The inner mechanism of the `CASE` depends on the following classes:
+The inner mechanism of the `OBFY_CASE` depends on the following classes:
 
-1. The `obf::case_instruction` class, which acts as a basic class for:
-2. `obf::branch` and
-3. `obf::body` classes.
+1. The `obfy::case_instruction` class, which acts as a basic class for:
+2. `obfy::branch` and
+3. `obfy::body` classes.
 
-The `obf::branch` class is the class which gets instantiated by the `WHEN` macro in a call to the `add_entry` method of the `case_wrapper` object created by the `CASE`. Its role is to act as the condition chooser, and it looks like:
+The `obfy::branch` class is the class which gets instantiated by the `WHEN` macro in a call to the `add_entry` method of the `case_wrapper` object created by the `CASE`. Its role is to act as the condition chooser, and it looks like:
 
 ```cpp
 template<class CT>
@@ -983,9 +985,9 @@ private:
 };
 ```
 
-The `WHEN` macro has a more or less confusing lambda declaration which includes the local `__avholder` as being passed in by value. This is again due to the fact that various compilers decided to not to compile the same source code in the same way... well, some of them had a coup and bluntly declined to compile what the others already digested, that's why the ugly solution came into the existence.
+The `OBFY_WHEN` macro has a more or less confusing lambda declaration which includes the local `__avholder` as being passed in by value. This is again due to the fact that various compilers decided to not to compile the same source code in the same way... well, some of them had a coup and bluntly declined to compile what the others already digested, that's why the ugly solution came into the existence.
 
-The code that is executed upon entering a branch (including also the default branch) is created by the `DO` and the `DEFAULT` macros. They both create an instance of the `obf::body` class, and the `DO` adds it to the steps of the case wrapper class, and the `DEFAULT` calls  the `add_default` member in order to specify a default branch. The `obf::body` class is much simpler, just a few lines:
+The code that is executed upon entering a branch (including also the default branch) is created by the `DO` and the `DEFAULT` macros. They both create an instance of the `obfy::body` class, and the `DO` adds it to the steps of the case wrapper class, and the `DEFAULT` calls  the `add_default` member in order to specify a default branch. The `obfy::body` class is much simpler, just a few lines:
 
 ```cpp
 class body final : public case_instruction
@@ -1037,7 +1039,7 @@ void run() const
 }
 ```
 
-As a first step the code looks for the first branch which satisfies the condition (if `(*it)->execute(rvholder<CT>(check,check));` returns `next_step::ns_done` it means it has found a branch satisfying the `check`). In this case it skips all the other conditions for this branch and starts execution the code for all the `obf::body` classes that are in the object. In case a `BREAK` statement was issued while executing the bodies the code will throw and the `catch` in `ENDCASE` (`catch(obf::next_step& cv)` will swallow it, and will return the execution to the normal flow.
+As a first step the code looks for the first branch which satisfies the condition (if `(*it)->execute(rvholder<CT>(check,check));` returns `next_step::ns_done` it means it has found a branch satisfying the `check`). In this case it skips all the other conditions for this branch and starts execution the code for all the `obfy::body` classes that are in the object. In case a `BREAK` statement was issued while executing the bodies the code will throw and the `catch` in `ENDCASE` (`catch(obfy::next_step& cv)` will swallow it, and will return the execution to the normal flow.
 
 The last resort is that if we have a `default_step` and we are still in the body of the run (ie: noone issued a `BREAK` command) it also executes it. 
 
@@ -1050,40 +1052,40 @@ Now, that we are aware of a library that offers code obfuscation without too muc
 ```cpp
 bool check_license1(const char* user, const char* users_license)
 {
-    OBF_BEGIN
+    OBFY_BEGIN_CODE
     std::string license;
     size_t ll = strlen(users_license);
     size_t l = strlen(user), lic_ctr = N(0);
 
-    size_t add = N(0), i =N(0);
+    size_t add = OBFY_N(0), i =OBFY_N(0);
 
-    FOR (V(i) = N(0), V(i) < V(ll), V(i)++)
-        IF ( V(users_license[i]) != N(45) )
+    FOR (OBFY_V(i) = OBFY_N(0), OBFY_V(i) < OBFY_V(ll), OBFY_V(i)++)
+        IF ( OBFY_V(users_license[i]) != OBFY_N(45) )
             license += users_license[i];
-        ENDIF
-    ENDFOR
+        OBFY_ENDIF
+    OBFY_ENDFOR
 
-    WHILE (V(lic_ctr) < license.length() )
+    OBFY_WHILE (OBFY_V(lic_ctr) < license.length() )
 
         size_t i = lic_ctr;
-        V(i) %= l;
+        OBFY_V(i) %= l;
         int current = 0;
-        WHILE(V(i) < V(l) )
-            V(current) += user[V(i)++];
-        ENDWHILE
-        V(current) += V(add);
-        ++V(add);
+        OBFY_WHILE(V(i) < OBFY_V(l) )
+            OBFY_V(current) += user[V(i)++];
+        OBFY_ENDWHILE
+        OBFY_V(current) += OBFY_V(add);
+        ++OBFY_V(add);
 
-        IF ( (license [lic_ctr] != letters[current % sizeof letters]) )
-            RETURN(false);
-        ENDIF
+        OBFY_IF ( (license [lic_ctr] != letters[current % sizeof letters]) )
+            OBFY_RETURN(false);
+        OBFY_ENDIF
 
         lic_ctr++;
-    ENDWHILE
+    OBFY_ENDWHILE
 
-    RETURN (true);
+    OBFY_RETURN (true);
 
-    OBF_END
+    OBFY_END_CODE
 }
 ```
 
