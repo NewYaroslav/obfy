@@ -130,19 +130,19 @@ The following functionalities are provided by the framework:
 
 Like every developer who has been there, we know that debugging complex and highly templated c++ code sometimes can be a nightmare. In order to avoid this nightmare while using the framework we decided to implement a debugging mode.
 
-In order to activate the debugging mode of the framework define the `OBF_DEBUG` identifier before including the obfuscation header file. Please see at the specific control structures how the debugging mode alters the behaviour of the macro.
+In order to activate the debugging mode of the framework define the `OBFY_DEBUG` identifier before including the obfuscation header file. Please see at the specific control structures how the debugging mode alters the behaviour of the macro.
 
 ### Using the framework
 
 The basic usage of the framework boils down to including the header file providing the obfuscating functionality
 
 ```cpp
-#include "instr.h"`
+#include "obfy/obfy.hpp"`
 ```
 
 then using the macro pair `OBFY_BEGIN_CODE` and `OBFY_END_CODE` as delimiters of the code sequences that will be using obfuscated expressions.
 
-For a more under the hood view of the framework, the `OBFY_BEGIN_CODE` and `OBFY_END_CODE` macros declare a `try`-`catch` block, which has support for returning values from the obfuscated current code sequence, and also provides support for basic control flow modifications such as the usage of `continue` and `break` emulator macros `CONTINUE` and `BREAK`.
+For a more under the hood view of the framework, the `OBFY_BEGIN_CODE` and `OBFY_END_CODE` macros declare a `try`-`catch` block, which has support for returning values from the obfuscated current code sequence, and also provides support for basic control flow modifications such as the usage of `continue` and `break` emulator macros `OBFY_CONTINUE` and `OBFY_BREAK`.
 
 #### Behind the scenes: `OBFY_BEGIN_CODE` and `OBFY_END_CODE`
 
@@ -158,7 +158,7 @@ and `OBFY_END_CODE` becomes:
 #define OBFY_END_CODE } catch(std::shared_ptr<obfy::base_rvholder>& r) { return *r; } catch (...) {throw;}
 ```
 
-In order to support for "return"-ing a value from the current obfuscated block we need a special variable `__rvlocal`. At later stages this value will be populated with meaningful values as a result of executing the code of the `RETURN` macro (which will "throw" a value with type of `std::shared_ptr<obfy::base_rvholder>`). The `OBFY_END_CODE` will catch this specific value and handle it appropriately, while all other values thrown will be re-thrown in order to not to disturb the client code's exception handling.
+In order to support for "return"-ing a value from the current obfuscated block we need a special variable `__rvlocal`. At later stages this value will be populated with meaningful values as a result of executing the code of the `OBFY_RETURN` macro (which will "throw" a value with type of `std::shared_ptr<obfy::base_rvholder>`). The `OBFY_END_CODE` will catch this specific value and handle it appropriately, while all other values thrown will be re-thrown in order to not to disturb the client code's exception handling.
 
 #### Value and numerical wrappers
 
@@ -175,11 +175,11 @@ OBFY_V(a) = OBFY_N(1);
 
 After executing the statement above, the value of `a` will be 1.
 
-The value wrappers implement a limited set of operations which you can use to change the value of the wrapped variable. These are the compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`, `<<=`, `>>=`, `&=`, `|=`, `^=` and the post/pre-increment operations `--` and `++`. All of the binary operators `+`, `-`, `*`, `/`, `%`, `&`, `|`, `<<`, `>>` are also implemented so you can write `V(a) + N(1)` or `V(a) - V(b)`.
+The value wrappers implement a limited set of operations which you can use to change the value of the wrapped variable. These are the compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`, `<<=`, `>>=`, `&=`, `|=`, `^=` and the post/pre-increment operations `--` and `++`. All of the binary operators `+`, `-`, `*`, `/`, `%`, `&`, `|`, `<<`, `>>` are also implemented so you can write `OBFY_V(a) + OBFY_N(1)` or `OBFY_V(a) - OBFY_V(b)`.
 
 Also, the assignment operator to a specific type and from a different value wrapper is implemented, together with the comparison operators.
 
-As the name implies, the value wrappers will wrap values by offering a behaviour similar to the usage of simple values, so be aware, that variables which are `const` values can be wrapped into the `V()` wrapper however as with real const variables, you cannot assign to them. So for example the following code will not compile:
+As the name implies, the value wrappers will wrap values by offering a behaviour similar to the usage of simple values, so be aware, that variables which are `const` values can be wrapped into the `OBFY_V()` wrapper however as with real const variables, you cannot assign to them. So for example the following code will not compile:
 
 ```cpp
     const char* t = "ABC";
@@ -259,7 +259,7 @@ However, please note the several `volatile` variables ... which are required in 
 
 ##### Behind the scenes of the implementation of the variable wrapping
 
-In case of not building the code in debugging mode, the macro `V` expands to the following C++ nightmare:
+In case of not building the code in debugging mode, the macro `OBFY_V` expands to the following C++ nightmare:
 
 ```cpp
 #define OBFY_MAX_BOGUS_IMPLEMENTATIONS 3
@@ -607,11 +607,11 @@ OBFY_ENDFOR
 
 The same restriction concerning the variable declaration in the `initializer` as in the case of the `IF` applies for the FOR macro too, so it is not valid to write:
 
-    FOR(int x=0, x<10, x++)
+    OBFY_FOR(int x=0, x<10, x++)
 
 and the reasons are again the same as presented above.
 
-In case of a debugging session the `FOR`-`ENDFOR` macros expand to the following:
+In case of a debugging session the `OBFY_FOR`-`OBFY_ENDFOR` macros expand to the following:
 
 ```cpp
 #define OBFY_FOR(init,cond,inc) for(init;cond;inc) {
@@ -622,13 +622,13 @@ In case of a debugging session the `FOR`-`ENDFOR` macros expand to the following
 
 The macro provided as replacement for the `while` is:
 
-    WHILE(condition)
+    OBFY_WHILE(condition)
     ....statements
-    ENDWHILE
+    OBFY_ENDWHILE
 
-The while loop has the same characteristics as the `IF` construct and behaves the same way as you would expect from a well-mannered while statement: it checks the condition on the top, and executes the repeatedly the statements as long as the given condition is true.
+The while loop has the same characteristics as the `OBFY_IF` construct and behaves the same way as you would expect from a well-mannered while statement: it checks the condition on the top, and executes the repeatedly the statements as long as the given condition is true.
 
-Here is an example for the `WHILE`:
+Here is an example for the `OBFY_WHILE`:
 
 ```cpp
     OBFY_V(a) = 1;
@@ -677,7 +677,7 @@ In case of debugging, the  `OBFY_REPEAT` - `OBFY_AS_LONG_AS` construct expands t
 
 The logic and design of looping constructs are very similar to each other, they behave very similarly to the `IF` and each of them uses the same building blocks. There are the wrapper classes (`for_wrapper`, `repeat_wrapper`, `while_wrapper`) each of them with their functors for verifying the condition, and the steps to be executed. 
 
-The implementation in each of the `run()` method of the wrapper class follows the logic of the keyword it tries to emulate, with the exception that the commands are wrapped into a `try` - `catch` in order for `BREAK` and `CONTINUE` to function properly. Let's see for example the `run()` of the for wrapper:
+The implementation in each of the `run()` method of the wrapper class follows the logic of the keyword it tries to emulate, with the exception that the commands are wrapped into a `try` - `catch` in order for `OBFY_BREAK` and `OBFY_CONTINUE` to function properly. Let's see for example the `run()` of the for wrapper:
 
 ```cpp
 void run()
@@ -699,7 +699,7 @@ void run()
 
 #### Altering the control flow of the application
 
-Sometimes there is a need to alter the execution flow of a loop, C++ has support for this operation by providing the `continue` and `break` statements. The framework offers the `CONTINUE` and `BREAK` macros to achieve this goal.
+Sometimes there is a need to alter the execution flow of a loop, C++ has support for this operation by providing the `continue` and `break` statements. The framework offers the `OBFY_CONTINUE` and `OBFY_BREAK` macros to achieve this goal.
 
 ##### The `CONTINUE` statement
 
@@ -861,7 +861,7 @@ Here is the `OBFY_CASE` statement:
 
 The functionality is very similar to the well known `switch`-`case` construct, the main differences are:
 
-1. It is possible to use non-numeric, non-constant values (variables and strings) for the `OBFY_WHEN` due to the fact that all of the `OBFY_CASE` statement is wrapped up in a templated, lambdaized well hidden from the outside world, construct. Be careful with this extra feature when using the debugging mode of the library because the `CASE` macro expands to the standard `case` keyword.
+1. It is possible to use non-numeric, non-constant values (variables and strings) for the `OBFY_WHEN` due to the fact that all of the `OBFY_CASE` statement is wrapped up in a templated, lambdaized well hidden from the outside world, construct. Be careful with this extra feature when using the debugging mode of the library because the `OBFY_CASE` macro expands to the standard `case` keyword.
 2. It is possible to have multiple conditions for a `OBFY_WHEN` label joined together with `OBFY_OR`.
 
 The fall through behaviour of the `switch` construct which is familiar to c++ programmers was kept, so there is a need to put in a `OBFY_BREAK` statement if you wish for the operation to stop after entering a branch.
@@ -920,7 +920,7 @@ Certainly, the most complex of all constructs is the `OBFY_CASE` one. Just the a
 
 Let's dive into it.  
 
-The `case_wrapper` name should be already familiar from the various wrappers, but for the `CASE` the real workhorse is the `case_wrapper_base` class. The `case_wrapper` class is necesarry in order to make possible the `CASE` selection on `const` or non `const` objects, so the `case_wrapper` classes just derives from `case_wrapper_base` and specializes on the `const`ness of the `CASE` expression. Please note that the `CASE` macro also evaluates more than once the `a` parameters, so writing `CASE(x++)` will lead to undefined behaviour.
+The `case_wrapper` name should be already familiar from the various wrappers, but for the `OBFY_CASE` the real workhorse is the `case_wrapper_base` class. The `case_wrapper` class is necesarry in order to make possible the `OBFY_CASE` selection on `const` or non `const` objects, so the `case_wrapper` classes just derives from `case_wrapper_base` and specializes on the `const`ness of the `OBFY_CASE` expression. Please note that the `OBFY_CASE` macro also evaluates more than once the `a` parameters, so writing `OBFY_CASE(x++)` will lead to undefined behaviour.
 
 The `case_wrapper_base` class looks like:
 
@@ -987,7 +987,7 @@ private:
 
 The `OBFY_WHEN` macro has a more or less confusing lambda declaration which includes the local `__avholder` as being passed in by value. This is again due to the fact that various compilers decided to not to compile the same source code in the same way... well, some of them had a coup and bluntly declined to compile what the others already digested, that's why the ugly solution came into the existence.
 
-The code that is executed upon entering a branch (including also the default branch) is created by the `DO` and the `DEFAULT` macros. They both create an instance of the `obfy::body` class, and the `DO` adds it to the steps of the case wrapper class, and the `DEFAULT` calls  the `add_default` member in order to specify a default branch. The `obfy::body` class is much simpler, just a few lines:
+The code that is executed upon entering a branch (including also the default branch) is created by the `OBFY_DO` and the `OBFY_DEFAULT` macros. They both create an instance of the `obfy::body` class, and the `OBFY_DO` adds it to the steps of the case wrapper class, and the `OBFY_DEFAULT` calls  the `add_default` member in order to specify a default branch. The `obfy::body` class is much simpler, just a few lines:
 
 ```cpp
 class body final : public case_instruction
@@ -1039,9 +1039,9 @@ void run() const
 }
 ```
 
-As a first step the code looks for the first branch which satisfies the condition (if `(*it)->execute(rvholder<CT>(check,check));` returns `next_step::ns_done` it means it has found a branch satisfying the `check`). In this case it skips all the other conditions for this branch and starts execution the code for all the `obfy::body` classes that are in the object. In case a `BREAK` statement was issued while executing the bodies the code will throw and the `catch` in `ENDCASE` (`catch(obfy::next_step& cv)` will swallow it, and will return the execution to the normal flow.
+As a first step the code looks for the first branch which satisfies the condition (if `(*it)->execute(rvholder<CT>(check,check));` returns `next_step::ns_done` it means it has found a branch satisfying the `check`). In this case it skips all the other conditions for this branch and starts execution the code for all the `obfy::body` classes that are in the object. In case a `OBFY_BREAK` statement was issued while executing the bodies the code will throw and the `catch` in `OBFY_ENDCASE` (`catch(obfy::next_step& cv)` will swallow it, and will return the execution to the normal flow.
 
-The last resort is that if we have a `default_step` and we are still in the body of the run (ie: noone issued a `BREAK` command) it also executes it. 
+The last resort is that if we have a `default_step` and we are still in the body of the run (ie: noone issued a `OBFY_BREAK` command) it also executes it. 
 
 And with this we have presented the entire framework, together with implementation details, and now we are ready to catch up with our initial goal.
 
