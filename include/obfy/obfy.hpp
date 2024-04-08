@@ -633,12 +633,12 @@ class extra_xor final : public basic_extra
 public:
     extra_xor(T& a) : v(a)
     {
-        volatile T lv = MetaRandom<__COUNTER__, 4096>::value;
+        volatile T lv = static_cast<T>(MetaRandom<__COUNTER__, 4096>::value);
         v ^= lv;
     }
     virtual ~extra_xor()
     {
-        volatile T lv = MetaRandom<__COUNTER__ - 1, 4096>::value;
+        volatile T lv = static_cast<T>(MetaRandom<__COUNTER__ - 1, 4096>::value);
         v ^= lv;
     }
 
@@ -659,12 +659,12 @@ class extra_addition final : public basic_extra
 public:
     extra_addition(T& a) : v(a)
     {
-        volatile T lv = MetaRandom<__COUNTER__, 4096>::value;
+        volatile T lv = static_cast<T>(MetaRandom<__COUNTER__, 4096>::value);
         v += lv;
     }
     virtual ~extra_addition()
     {
-        volatile T lv = MetaRandom<__COUNTER__ - 1, 4096>::value;
+        volatile T lv = static_cast<T>(MetaRandom<__COUNTER__ - 1, 4096>::value);
         v -= lv;
     }
 private:
@@ -814,7 +814,8 @@ OBFY_DEFINE_EXTRA(2, extra_addition);
 #define OBFY_AS_LONG_AS(x) return __crv;}).set_condition([&]()->bool{ return ( (x) ); }).run(); }
 
 #define OBFY_BEGIN_CODE try { obfy::next_step __crv = obfy::next_step::ns_done; std::shared_ptr<obfy::base_rvholder> __rvlocal; (void)__crv;
-#define OBFY_END_CODE } catch(std::shared_ptr<obfy::base_rvholder>& r) { return *r; } catch (...) {throw;}
+#define OBFY_END_CODE } catch(std::shared_ptr<obfy::base_rvholder>& r) { return *r; }
+//#define OBFY_END_CODE } catch(std::shared_ptr<obfy::base_rvholder>& r) { return *r; } catch (...) {throw;}
 
 #define OBFY_CASE(a) try { std::shared_ptr<obfy::base_rvholder> __rvlocal;\
                 auto __avholder = a; obfy::case_wrapper<std::remove_reference<decltype(a)>::type>(a).
