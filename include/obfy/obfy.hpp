@@ -815,6 +815,7 @@ OBFY_DEFINE_EXTRA(2, extra_addition);
 
 #define OBFY_BEGIN_CODE try { obfy::next_step __crv = obfy::next_step::ns_done; std::shared_ptr<obfy::base_rvholder> __rvlocal; (void)__crv;
 #define OBFY_END_CODE } catch(std::shared_ptr<obfy::base_rvholder>& r) { return *r; }
+#define OBFY_END_CODE_VOID } catch(std::shared_ptr<obfy::base_rvholder>& r) { return; } catch (...) {throw;}
 //#define OBFY_END_CODE } catch(std::shared_ptr<obfy::base_rvholder>& r) { return *r; } catch (...) {throw;}
 
 #define OBFY_CASE(a) try { std::shared_ptr<obfy::base_rvholder> __rvlocal;\
