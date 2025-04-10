@@ -182,21 +182,19 @@ Also, the assignment operator to a specific type and from a different value wrap
 As the name implies, the value wrappers will wrap values by offering a behaviour similar to the usage of simple values, so be aware, that variables which are `const` values can be wrapped into the `OBFY_V()` wrapper however as with real const variables, you cannot assign to them. So for example the following code will not compile:
 
 ```cpp
-    const char* t = "ABC";
-    if( OBFY_V(t[1]) == 'B')
-    {
-        OBFY_V( t[1] ) = 'D';
-    }
+const char* t = "ABC";
+if( OBFY_V(t[1]) == 'B') {
+    OBFY_V( t[1] ) = 'D';
+}
 ```
 
 And the following 
 
 ```cpp
-    char* t = "ABC";
-    if( OBFY_V(t[1]) == 'B')
-    {
-        OBFY_V( t[1] ) = 'D';
-    }
+char* t = "ABC";
+if( OBFY_V(t[1]) == 'B') {
+    OBFY_V( t[1] ) = 'D';
+}
 ```
 
 will be undefined behaviour because the compiler highly probably will allocate the string `"ABC"` in a constant memory area (although I would expect your compiler to choke heavily on this expression since it's not valid modern C++ anymore). To work with this kind of data always use `char[]` instead of `char*`.
@@ -242,9 +240,9 @@ OBFY_TYPE(int) // And for all the other integral types
 The `Num` class tries to add some protection by adding some extra xor operations to the usage of a simple number, thus turning a simple numeric assignment into several steps of assembly code (Visual Studio 2015 generated the following code in Release With Debug Info mode):
 
 ```cpp
-    int n;
-    OBFY_BEGIN_CODE
-       n = N(42);
+int n;
+OBFY_BEGIN_CODE
+n = N(42);
 002A5F74  mov         dword ptr [ebp-4],0  
 002A5F7B  mov         dword ptr [ebp-4],78Ch  
 002A5F82  mov         eax,dword ptr [ebp-4]  
@@ -252,7 +250,7 @@ The `Num` class tries to add some protection by adding some extra xor operations
 002A5F8A  mov         dword ptr [ebp-4],eax  
 002A5F8D  mov         eax,dword ptr [ebp-4]  
 002A5F90  xor         eax,929h  
-    OBFY_END_CODE
+OBFY_END_CODE
 ```
 
 However, please note the several `volatile` variables ... which are required in order to circumvent todays' extremely clever optimizing compilers. If we remove the `volatile` from the variables, the compiler is clever enough to guess the value I wanted to obfuscate, so ... there goes the obfuscation.
@@ -326,8 +324,7 @@ Now, back to the lambda, because it plays an important role. The lambda returns 
 
 ```cpp
 template <typename T>
-refholder<T> operator << (stream_helper, T& a)
-{
+refholder<T> operator << (stream_helper, T& a) {
     return refholder<T>(a);
 }
 ```
@@ -336,8 +333,7 @@ providing us with a controversary class, `refholder`:
 
 ```cpp
 template <typename T>
-class refholder final
-{
+class refholder final {
 public:
     refholder() = delete;
     refholder(T& pv) : v(pv) {}
@@ -384,9 +380,9 @@ This class has all the support for the basic operations you can execute on a var
 So, here comes a piece of generated assembly code for a very simple expression:
 
 ```cpp
-    int n;
-    OBFY_BEGIN_CODE
-        V(n) = N(42);
+int n;
+OBFY_BEGIN_CODE
+V(n) = N(42);
 00048466  mov         dword ptr [ebp-8],0  
 0004846D  mov         dword ptr [ebp-8],97Ch  
 00048474  push        esi  
@@ -409,7 +405,7 @@ So, here comes a piece of generated assembly code for a very simple expression:
 000484AE  xor         esi,492h  
 000484B4  mov         eax,dword ptr [eax]  
 000484B6  mov         dword ptr [eax],esi  
-    OBFY_END_CODE
+OBFY_END_CODE
 ```
 
 The sheer amount of extra code generated for a simple assignment is simply overwhelming.
@@ -519,8 +515,7 @@ will expand to
 Now let's examine the `if_wrapper` class.
 
 ```cpp
-class if_wrapper final
-{
+class if_wrapper final {
 public:
     template<class T>
     if_wrapper(T lambda) {condition.reset(new bool_functor<T>(lambda));}
@@ -559,14 +554,12 @@ private:
 Now it is very clear why we needed the lambda created by the `IF` macro `(([&]()->bool { return (n == 42); }))`. Because we needed to create an object of type `class bool_functor` from it, which will give us the true-ness of the if condition. The bool functor class looks like:
 
 ```cpp
-struct bool_functor_base
-{
+struct bool_functor_base {
     virtual bool run() = 0;
 };
 
 template <class T>
-struct bool_functor final : public bool_functor_base
-{
+struct bool_functor final : public bool_functor_base {
     bool_functor(T r) : runner(r) {}
     virtual bool run() {return runner();}
 
@@ -631,11 +624,11 @@ The while loop has the same characteristics as the `OBFY_IF` construct and behav
 Here is an example for the `OBFY_WHILE`:
 
 ```cpp
-    OBFY_V(a) = 1;
-    OBFY_WHILE( OBFY_V(a)  < OBFY_N(10) )
-        std::cout << "IN:" << a<< std::endl;
-        OBFY_V(a) += OBFY_N(1);
-    OBFY_ENDWHILE
+OBFY_V(a) = 1;
+OBFY_WHILE( OBFY_V(a)  < OBFY_N(10) )
+    std::cout << "IN:" << a<< std::endl;
+    OBFY_V(a) += OBFY_N(1);
+OBFY_ENDWHILE
 ```
 
 Unfortunately the `OBFY_WHILE` loop also has the same restrictions as the `OBFY_IF`: you cannot declare a variable in its condition.
@@ -756,8 +749,7 @@ This loop will print `counter=0` and `counter=1` then it will leave the body of 
 As expected, the `OBFY_RETURN` statement returns the execution of the current function and will return the specified value to the caller function. Here is an example of returning 42 from a function:
 
 ```cpp
-int some_fun()
-{
+int some_fun() {
     OBFY_BEGIN_CODE
 
         OBFY_RETURN(42)
@@ -769,8 +761,7 @@ int some_fun()
 With the introduction of `OBFY_RETURN`, an important issue arose: The obfuscation framework does not support the usage of `void` functions. So the following code will not compile:
 
 ```cpp
-void void_test(int& a)
-{
+void void_test(int& a) {
     OBFY_BEGIN_CODE
         OBFY_IF(OBFY_V(a) == 42)
             OBFY_V(a) = 43;
@@ -803,8 +794,7 @@ As you can see, there are three evaluations of  the `x` macro parameter, in orde
 The `rvholder` class has the following body:
 
 ```cpp
-struct base_rvholder
-{
+struct base_rvholder {
     virtual ~base_rvholder() = default;
 
     template<class T>
@@ -826,8 +816,7 @@ struct base_rvholder
 };
 
 template<class T>
-class rvholder : public base_rvholder
-{
+class rvholder : public base_rvholder {
 public:
     rvholder(T t, T c) :base_rvholder(), v(t), check(c) {}
     ~rvholder() = default;
@@ -869,25 +858,25 @@ The fall through behaviour of the `switch` construct which is familiar to c++ pr
 And here is an example for the `OBFY_CASE` statement:
 
 ```cpp
-    std::string something = "D";
-    std::string something_else = "D";
-    OBFY_CASE (something)
-        OBFY_WHEN("A") OBFY_OR OBFY_WHEN("B") OBFY_DO
-            std::cout <<"Hurra, something is " << something << std::endl;
-            OBFY_BREAK;
-        OBFY_DONE
-        OBFY_WHEN("C") OBFY_DO
-            std::cout <<"Too bad, something is " << something << std::endl;
-            OBFY_BREAK;
-        OBFY_DONE
-        OBFY_WHEN(something_else) OBFY_DO
-            std::cout <<"Interesting, something is " << something_else << std::endl;
-            OBFY_BREAK;
-        OBFY_DONE
-        OBFY_DEFAULT
-            std::cout << "something is neither A, B or C, but:" << something <<std::endl;
-        OBFY_DONE
-    OBFY_ENDCASE
+std::string something = "D";
+std::string something_else = "D";
+OBFY_CASE (something)
+    OBFY_WHEN("A") OBFY_OR OBFY_WHEN("B") OBFY_DO
+        std::cout <<"Hurra, something is " << something << std::endl;
+        OBFY_BREAK;
+    OBFY_DONE
+    OBFY_WHEN("C") OBFY_DO
+        std::cout <<"Too bad, something is " << something << std::endl;
+        OBFY_BREAK;
+    OBFY_DONE
+    OBFY_WHEN(something_else) OBFY_DO
+        std::cout <<"Interesting, something is " << something_else << std::endl;
+        OBFY_BREAK;
+    OBFY_DONE
+    OBFY_DEFAULT
+        std::cout << "something is neither A, B or C, but:" << something <<std::endl;
+    OBFY_DONE
+OBFY_ENDCASE
 ```
 In case the framework is used in debugging mode the macros expand to the following statements:
 
@@ -926,8 +915,7 @@ The `case_wrapper_base` class looks like:
 
 ```cpp
 template <class CT>
-class case_wrapper_base
-{
+class case_wrapper_base {
 public:
     explicit case_wrapper_base(const CT& v) : check(v), default_step(nullptr) {}
     case_wrapper_base& add_entry(const case_instruction& lambda_holder) {
@@ -947,7 +935,6 @@ private:
     const CT check;
     const case_instruction* default_step;
 };
-
 ```
 
 The `const CT check;` is the expression that is being checked for the various case branches. Please note the `add_entry` and `add_default` methods, together with the `join()` method which allow chaining of expressions and method calls on the same object. The `std::vector<const case_instruction*> steps;` is a cumulative container for all the branch condition expressions and also bodies (code which is executed in a branch). This will introduce more complex code at a later stage, however it was necessary to have these two joined in the same container in order to allow as similar behaviour to the original way the C++ `case` works, as possible.
@@ -962,8 +949,7 @@ The `obfy::branch` class is the class which gets instantiated by the `WHEN` macr
 
 ```cpp
 template<class CT>
-class branch final : public case_instruction
-{
+class branch final : public case_instruction {
 public:
     template<class T>
     branch(T lambda) 
@@ -990,8 +976,7 @@ The `OBFY_WHEN` macro has a more or less confusing lambda declaration which incl
 The code that is executed upon entering a branch (including also the default branch) is created by the `OBFY_DO` and the `OBFY_DEFAULT` macros. They both create an instance of the `obfy::body` class, and the `OBFY_DO` adds it to the steps of the case wrapper class, and the `OBFY_DEFAULT` calls  the `add_default` member in order to specify a default branch. The `obfy::body` class is much simpler, just a few lines:
 
 ```cpp
-class body final : public case_instruction
-{
+class body final : public case_instruction {
 public:
     template<class T>
     body(T lambda) 
@@ -1010,8 +995,7 @@ private:
 The most interesting (and longest) part of the case implementation is the `run()` method, presented here (in a somewhat stripped manner, I have removed all the security checks in order to have presentable code considering its length):
 
 ```cpp
-void run() const
-{
+void run() const {
     auto it = steps.begin();
     while(it != steps.end()) {
         next_step enter = (*it)->execute(rvholder<CT>(check,check));
@@ -1050,8 +1034,7 @@ And with this we have presented the entire framework, together with implementati
 Now, that we are aware of a library that offers code obfuscation without too much headaches from our side (at least, this was the intention of the author) let's re-consider the implementation of the naive licensing algorithm using these new terms. So here it comes:
 
 ```cpp
-bool check_license1(const char* user, const char* users_license)
-{
+bool check_license1(const char* user, const char* users_license) {
     OBFY_BEGIN_CODE
     std::string license;
     size_t ll = strlen(users_license);
@@ -1124,8 +1107,7 @@ As promised, here is the naive license generating algorithm. Any further improve
 ```cpp
 static const char letters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-std::string generate_license(const char* user)
-{
+std::string generate_license(const char* user) {
     if(!user) return "";
 
     // the license will contain only these character
@@ -1133,13 +1115,11 @@ std::string generate_license(const char* user)
     char result[17] = { 0 };
     size_t l = strlen(user), lic_ctr = 0;
     int add = 0;
-    while (lic_ctr < 16)
-    {
+    while (lic_ctr < 16) {
         size_t i = lic_ctr;
         i %= l;
         int current = 0;
-        while (i < l)
-        {
+        while (i < l) {
             current += user[i];
             i++;
         }
