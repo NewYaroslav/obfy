@@ -593,7 +593,7 @@ The `OBFY_FOR` loops should be ended with and `OBFY_ENDFOR` statement to signal 
 Here is a simple example for the `OBFY_FOR` loop.
 
 ```cpp
-OBFY_FOR(V(a) = OBFY_N(0), OBFY_V(a) < OBFY_N(10), OBFY_V(a) += 1)
+OBFY_FOR(OBFY_V(a) = OBFY_N(0), OBFY_V(a) < OBFY_N(10), OBFY_V(a) += 1)
    std::cout << OBFY_V(a) << std::endl;
 OBFY_ENDFOR
 ```
