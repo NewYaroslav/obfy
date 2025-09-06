@@ -19,8 +19,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **/
 #pragma once
-#ifndef OBFY_INSTR_HPP
-#define OBFY_INSTR_HPP
+#ifndef __OBFY_HPP__
+#define __OBFY_HPP__
 
 #include <string>
 #include <typeinfo>
@@ -833,4 +833,4 @@ OBFY_DEFINE_EXTRA(2, extra_addition);
 
 } // namespace obfy
 
-#endif // OBFY_INSTR_HPP
+#endif // __OBFY_HPP__
