@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - release/**
+      - stable
+  pull_request:
+    branches:
+      - main
+      - release/**
+      - codex/**
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        std: [11, 17]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Boost (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y libboost-all-dev
+      - name: Install Boost (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          choco install boost-msvc-14.3 -y --no-progress --prerelease
+          $boost = Get-ChildItem -Path 'C:\local' -Filter 'boost_*' | Select-Object -First 1
+          "BOOST_ROOT=$($boost.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "$($boost.FullName)\lib64-msvc-14.3" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=${{ matrix.std }}
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure

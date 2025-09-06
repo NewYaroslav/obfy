@@ -707,12 +707,13 @@ class extra_chooser final
 template<typename T, T n> class Num final
 {
 public:
-    enum { value = ( (n & 0x01)  | ( Num < T , (n >> 1)>::value << 1) ), int64_forcer = 0xffffffffffffffffULL };
+    static constexpr T value =
+        ((n & 0x01) | (Num<T, (n >> 1)>::value << 1));
     Num() : v(0)
     {
-        v = value ^  MetaRandom<32, 4096>::value;
+        v = value ^ MetaRandom<32, 4096>::value;
     }
-    T get() const { T x = v ^ MetaRandom<32, 4096>::value; return x;}
+    T get() const { T x = v ^ MetaRandom<32, 4096>::value; return x; }
 private:
     volatile T v;
 };
