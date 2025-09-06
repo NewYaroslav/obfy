@@ -116,8 +116,13 @@ public:
     refholder<T>& operator = (const refholder<T>& ov ) { v = ov.v; return *this; }
 
     /* Comparison */
-    bool operator == (const T& ov) { return !(v ^ ov); }
-    bool operator != (const T& ov) { return !operator ==(ov); }
+    bool operator==(const T& ov) const {
+        T tmp = v;
+        typedef std::integral_constant<bool,
+            std::is_integral<T>::value || std::is_enum<T>::value> is_int;
+        return eq_impl(tmp, ov, is_int{});
+    }
+    bool operator!=(const T& ov) const { return !(*this == ov); }
     OBFY_COMPARISON_OPERATOR(>=)
     OBFY_COMPARISON_OPERATOR(<=)
     OBFY_COMPARISON_OPERATOR(>)
@@ -147,6 +152,9 @@ public:
     OBFY_COMP_ASSIGNMENT_OPERATOR(^)
 
 private:
+
+    static bool eq_impl(T a, T b, std::true_type) { return (a ^ b) == 0; } // integral/enum
+    static bool eq_impl(T a, T b, std::false_type) { return a == b; }      // others
 
     /* The root of all evil */
     volatile T& v;
