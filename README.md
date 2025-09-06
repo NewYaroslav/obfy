@@ -1,6 +1,20 @@
-[![Build Status](https://travis-ci.org/fritzone/obfy.svg?branch=master)](https://travis-ci.org/fritzone/obfy)
+[![Build Status](https://github.com/fritzone/obfy/actions/workflows/build.yml/badge.svg)](https://github.com/fritzone/obfy/actions/workflows/build.yml)
 
 **This version of the library differs from the original in that it has improved compatibility with other libraries by changing macro names. The original library caused name conflicts when used together with the Eigen library.**
+
+## Quick Start
+
+Add the library to your CMake project and build it with:
+
+```cmake
+add_subdirectory(obfy)
+target_link_libraries(your-target PRIVATE obfy)
+```
+
+```bash
+cmake -S . -B build
+cmake --build build
+```
 
 # Building
 
