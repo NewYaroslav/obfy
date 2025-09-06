@@ -3,6 +3,7 @@
 
 #include <obfy/obfy.hpp>
 
+
 int simple_if()
 {
     int n = 42;
@@ -11,7 +12,7 @@ int simple_if()
             n = 43;
        OBFY_ELSE
             n = 44;
-       OBFY_END
+       OBFY_ENDIF
     OBFY_END_CODE
     return n;
 }
@@ -114,7 +115,7 @@ int for_loop_test_break()
             OBFY_V(n) ++;
             OBFY_IF(OBFY_V(a) == OBFY_N(5))
                 OBFY_BREAK;
-            OBFY_END
+            OBFY_ENDIF
         OBFY_ENDFOR
 
     OBFY_END_CODE
@@ -130,7 +131,7 @@ int for_loop_test_continue()
         OBFY_FOR(OBFY_V(a) = 0, OBFY_V(a) < OBFY_N(10), OBFY_V(a)++)
             OBFY_IF(OBFY_V(a) == OBFY_N(5))
                 OBFY_CONTINUE;
-            OBFY_END
+            OBFY_ENDIF
             OBFY_V(n) ++;
         OBFY_ENDFOR
 
@@ -164,7 +165,7 @@ int while_loop_test_break()
             OBFY_V(a) = OBFY_V(n);
             OBFY_IF (OBFY_V(a) > OBFY_N(5) )
                 OBFY_BREAK;
-            OBFY_END
+            OBFY_ENDIF
         OBFY_ENDWHILE
 
     OBFY_END_CODE
@@ -181,7 +182,7 @@ int while_loop_test_continue()
             OBFY_V(a) ++;
             OBFY_IF (OBFY_V(a) >= OBFY_N(5) )
                 OBFY_CONTINUE;
-            OBFY_END
+            OBFY_ENDIF
             OBFY_V(n) ++;
 
         OBFY_ENDWHILE
@@ -219,7 +220,7 @@ int repeat_loop_test_break()
             OBFY_ELSE
                 ++OBFY_V(a);
                 OBFY_V(n) = OBFY_V(a);
-        OBFY_END
+        OBFY_ENDIF
         OBFY_AS_LONG_AS ( OBFY_V(a) <= OBFY_N(10))
 
     OBFY_END_CODE
@@ -238,7 +239,7 @@ int repeat_loop_test_continue()
 
             OBFY_IF (OBFY_V(a) < OBFY_N(7))
                 OBFY_CONTINUE;
-            OBFY_END
+            OBFY_ENDIF
 
             OBFY_V(n) ++;
         OBFY_AS_LONG_AS ( OBFY_V(a) < OBFY_N(10))
@@ -253,7 +254,7 @@ int case_tester()
     int n =
 
 
-#ifndef OBF_DEBUG
+#ifndef OBFY_DEBUG
             0;
 
     OBFY_BEGIN_CODE
@@ -296,7 +297,7 @@ int case_tester_fallthrough()
     std::string something = "B";
     int n =
 
-#ifndef OBF_DEBUG
+#ifndef OBFY_DEBUG
             0;
     OBFY_BEGIN_CODE
 
@@ -341,7 +342,7 @@ ATest class_test(int& a)
     OBFY_BEGIN_CODE
         OBFY_IF(OBFY_V(a) == 5)
             OBFY_V(a) = 42;
-        OBFY_END
+        OBFY_ENDIF
         OBFY_RETURN (ATest()) ;
     OBFY_END_CODE
 }
