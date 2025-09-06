@@ -1,3 +1,11 @@
+# obfy
+
+obfy is a header-only C++ library for code obfuscation. It offers a set of macros and
+lightweight wrappers that expand straightforward constructs into randomized sequences of
+operations, increasing the effort required for reverse engineering and bypassing basic
+license checks. The library targets developers who need a minimal, dependency-free layer
+of protection.
+
 [![Build Status](https://github.com/NewYaroslav/obfy/actions/workflows/build.yml/badge.svg)](https://github.com/NewYaroslav/obfy/actions/workflows/build.yml)
 
 **This version of the library differs from the original in that it has improved compatibility with other libraries by changing macro names. The original library caused name conflicts when used together with the Eigen library.**
