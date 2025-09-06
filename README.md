@@ -26,14 +26,17 @@ cmake --build build
 
 # Building
 
-This project uses CMake. To build the example program run:
+This project uses CMake. To build the example program and unit tests run:
 
 ```
 cmake -S . -B build
 cmake --build build
 ```
 
-The resulting executable can be found at `build/example`. To install the
+The example program and unit tests are built by default. Disable them with
+`-DOBFY_BUILD_EXAMPLE=OFF` or `-DOBFY_BUILD_TESTS=OFF`.
+
+The resulting example executable can be found at `build/example`. To install the
 headers system-wide, use:
 
 ```
