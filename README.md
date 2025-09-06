@@ -2,6 +2,22 @@
 
 **This version of the library differs from the original in that it has improved compatibility with other libraries by changing macro names. The original library caused name conflicts when used together with the Eigen library.**
 
+# Building
+
+This project uses CMake. To build the example program run:
+
+```
+cmake -S . -B build
+cmake --build build
+```
+
+The resulting executable can be found at `build/example`. To install the
+headers system-wide, use:
+
+```
+cmake --install build --prefix /usr/local
+```
+
 # Attacking the licensing problems with C++
 
 From the early days of the commercialization of computer software, malicious programmers, also known as crackers have been continuously nettling the programmers of aforementioned software by constantly bypassing the clever licensing mechanisms they have implemented in their software, thus causing financial damages to the companies providing the software.
