@@ -200,7 +200,7 @@ In order to support for "return"-ing a value from the current obfuscated block w
 
 #### Value and numerical wrappers
 
-To achieve an extra layer of obfuscation, the integral numerical values can be wrapped in the macro `N()` and all integral numeric variables (`int`, `long`, ...) can be wrapped in the macro `OBFY_V()` to provide an extra layer of obfuscation for doing the calculation operations. The `OBFY_V()` value wrapper also can wrap individual array elements(`x[2]`), but not arrays (`x`) and also cannot wrap class instantiation values due to the fact that the macro expands to a reference holder object.
+To achieve an extra layer of obfuscation, the integral numerical values can be wrapped in the macro `OBFY_N()` and all integral numeric variables (`int`, `long`, ...) can be wrapped in the macro `OBFY_V()` to provide an extra layer of obfuscation for doing the calculation operations. The `OBFY_V()` value wrapper also can wrap individual array elements(`x[2]`), but not arrays (`x`) and also cannot wrap class instantiation values due to the fact that the macro expands to a reference holder object.
 
 The implementation of the wrappers uses the link time random number generator provided by [Andrivet] and the values are obfuscated by performing various operations to hide the original value.
 
@@ -280,7 +280,7 @@ The `Num` class tries to add some protection by adding some extra xor operations
 ```cpp
 int n;
 OBFY_BEGIN_CODE
-n = N(42);
+n = OBFY_N(42);
 002A5F74  mov         dword ptr [ebp-4],0  
 002A5F7B  mov         dword ptr [ebp-4],78Ch  
 002A5F82  mov         eax,dword ptr [ebp-4]  
@@ -420,7 +420,7 @@ So, here comes a piece of generated assembly code for a very simple expression:
 ```cpp
 int n;
 OBFY_BEGIN_CODE
-V(n) = N(42);
+OBFY_V(n) = OBFY_N(42);
 00048466  mov         dword ptr [ebp-8],0  
 0004846D  mov         dword ptr [ebp-8],97Ch  
 00048474  push        esi  
@@ -1076,9 +1076,9 @@ bool check_license1(const char* user, const char* users_license) {
     OBFY_BEGIN_CODE
     std::string license;
     size_t ll = strlen(users_license);
-    size_t l = strlen(user), lic_ctr = N(0);
+    size_t l = strlen(user), lic_ctr = OBFY_N(0);
 
-    size_t add = OBFY_N(0), i =OBFY_N(0);
+    size_t add = OBFY_N(0), i = OBFY_N(0);
 
     FOR (OBFY_V(i) = OBFY_N(0), OBFY_V(i) < OBFY_V(ll), OBFY_V(i)++)
         IF ( OBFY_V(users_license[i]) != OBFY_N(45) )
@@ -1091,8 +1091,8 @@ bool check_license1(const char* user, const char* users_license) {
         size_t i = lic_ctr;
         OBFY_V(i) %= l;
         int current = 0;
-        OBFY_WHILE(V(i) < OBFY_V(l) )
-            OBFY_V(current) += user[V(i)++];
+        OBFY_WHILE(OBFY_V(i) < OBFY_V(l) )
+            OBFY_V(current) += user[OBFY_V(i)++];
         OBFY_ENDWHILE
         OBFY_V(current) += OBFY_V(add);
         ++OBFY_V(add);
