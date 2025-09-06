@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/fritzone/obfy/actions/workflows/build.yml/badge.svg)](https://github.com/fritzone/obfy/actions/workflows/build.yml)
+[![Build Status](https://github.com/NewYaroslav/obfy/actions/workflows/build.yml/badge.svg)](https://github.com/NewYaroslav/obfy/actions/workflows/build.yml)
 
 **This version of the library differs from the original in that it has improved compatibility with other libraries by changing macro names. The original library caused name conflicts when used together with the Eigen library.**
 
@@ -1171,3 +1171,4 @@ std::string generate_license(const char* user) {
 [Wakely] - Stop the Constant Shouting- Overload Journal #121 - June 2014, Jonathan Wakely
 
 [Stackoverflow] - http://stackoverflow.com/questions/12387239/reference-member-variables-as-class-members
+
