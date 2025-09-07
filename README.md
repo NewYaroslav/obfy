@@ -287,7 +287,7 @@ void log_message() {
 
 #### Value and numerical wrappers
 
-To achieve an extra layer of obfuscation, the integral numerical values can be wrapped in the macro `OBFY_N()` and all integral numeric variables (`int`, `long`, ...) can be wrapped in the macro `OBFY_V()` to provide an extra layer of obfuscation for doing the calculation operations. The argument to `OBFY_N` must be a constant expression of an integral or enumeration type. The `OBFY_V()` value wrapper also can wrap individual array elements(`x[2]`), but not arrays (`x`) and also cannot wrap class instantiation values due to the fact that the macro expands to a reference holder object.
+To achieve an extra layer of obfuscation, the integral numerical values can be wrapped in the macro `OBFY_N()` and numeric variables (`int`, `long`, `float`, `double`, ...) can be wrapped in the macro `OBFY_V()` to provide an extra layer of obfuscation for doing the calculation operations. The argument to `OBFY_N` must be a constant expression of an integral or enumeration type. The `OBFY_V()` value wrapper also can wrap individual array elements(`x[2]`), but not arrays (`x`) and also cannot wrap class instantiation values due to the fact that the macro expands to a reference holder object.
 
 The implementation of the wrappers uses the link time random number generator provided by [Andrivet] and the values are obfuscated by performing various operations to hide the original value.
 
@@ -296,9 +296,11 @@ And here is an example for using the value and variable wrappers:
 ```cpp
 int a, b = OBFY_N(6);
 OBFY_V(a) = OBFY_N(1);
+float f;
+OBFY_V(f) = 3.14f;
 ```
 
-After executing the statement above, the value of `a` will be 1.
+After executing the statement above, the value of `a` will be 1 and `f` will be `3.14f`.
 
 The value wrappers implement a limited set of operations which you can use to change the value of the wrapped variable. These are the compound assignment operators: `+=`, `-=`, `*=`, `/=`, `%=`, `<<=`, `>>=`, `&=`, `|=`, `^=` and the post/pre-increment operations `--` and `++`. All of the binary operators `+`, `-`, `*`, `/`, `%`, `&`, `|`, `<<`, `>>` are also implemented so you can write `OBFY_V(a) + OBFY_N(1)` or `OBFY_V(a) - OBFY_V(b)`.
 
@@ -1205,9 +1207,9 @@ Those who dislike the usage of CAPITAL letters in code may find the framework to
 
 This brings us back to the swampy area of C++ and macros. There are several voices whispering loudly that macros have nothing to do in a C++ code, and there are several voices echoing back that macros if wisely used can help C++ code as well as good old style C. I personally have nothing against the wise use of macros, indeed they came to be very helpful while developing this framework.
 
-And last, but not least, the numeric value wrappers do not work with floating point numbers. This is due to the fact that extensive binary operations are used on the number to obfuscate its value and this would be impossible to accomplish with floating point values.
+Numeric value wrappers also work with floating point variables. `OBFY_V` can wrap `float` and `double` values by obfuscating their underlying byte representation. The `OBFY_N` macro remains limited to integral and enumeration constants.
 
-For occasional floating point constants you can assemble them from integers with `OBFY_RATIO_D` or `OBFY_RATIO_F`, e.g. `double pi = OBFY_RATIO_D(314, 100);`. These macros divide the obfuscated numerator and denominator at runtime. If an exact IEEE-754 bit pattern is required, store the bits as an integer and recover the value via `OBFY_BIT_CAST`.
+For floating point constants you can assemble them from integers with `OBFY_RATIO_D` or `OBFY_RATIO_F`, e.g. `double pi = OBFY_RATIO_D(314, 100);`. These macros divide the obfuscated numerator and denominator at runtime. If an exact IEEE-754 bit pattern is required, store the bits as an integer and recover the value via `OBFY_BIT_CAST`.
 
 # Some requirements
 
