@@ -1209,6 +1209,12 @@ This brings us back to the swampy area of C++ and macros. There are several voic
 
 Numeric value wrappers also work with floating point variables. `OBFY_V` can wrap `float` and `double` values by obfuscating their underlying byte representation. The `OBFY_N` macro remains limited to integral and enumeration constants.
 
+String literals can be protected with `OBFY_STR`. The characters are encoded at compile time using a blend of XOR and arithmetic transformations and decoded on demand at runtime.
+
+```cpp
+const char* hello = OBFY_STR("hello world");
+```
+
 For floating point constants you can assemble them from integers with `OBFY_RATIO_D` or `OBFY_RATIO_F`, e.g. `double pi = OBFY_RATIO_D(314, 100);`. These macros divide the obfuscated numerator and denominator at runtime. If an exact IEEE-754 bit pattern is required, store the bits as an integer and recover the value via `OBFY_BIT_CAST`.
 
 # Some requirements

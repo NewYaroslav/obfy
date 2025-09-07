@@ -1025,4 +1025,6 @@ OBFY_DEFINE_EXTRA(2, extra_addition);
 
 } // namespace obfy
 
+#include <obfy/obfy_str.hpp>
+
 #endif // __OBFY_HPP__
