@@ -387,7 +387,7 @@ However, please note the several `volatile` variables ... which are required in 
 In case of not building the code in debugging mode, the macro `OBFY_V` expands to the following C++ nightmare:
 
 ```cpp
-#define OBFY_MAX_BOGUS_IMPLEMENTATIONS 3
+#define OBFY_MAX_BOGUS_IMPLEMENTATIONS 6
 
 #define OBFY_V(a) ([&]() {obfy::extra_chooser<std::remove_reference<decltype(a)>::type, obfy::MetaRandom<__COUNTER__, \
             OBFY_MAX_BOGUS_IMPLEMENTATIONS>::value >::type _JOIN(_ec_,__COUNTER__)(a);\
@@ -396,7 +396,7 @@ In case of not building the code in debugging mode, the macro `OBFY_V` expands t
 
 So let's dissect it in order to understand the underlying operations.
 
-The value wrappers add an extra obfuscation layer to the values they wrap, by performing an extra addition, an extra substraction or an extra xor operation on the value itself. This is picked randomly when compilation happens by the `extra_chooser` class, which is like:
+The value wrappers add an extra obfuscation layer to the values they wrap, by performing an extra addition, an extra substraction, an extra xor, a bit rotation, a byte swap or an affine transformation on the value itself. This is picked randomly when compilation happens by the `extra_chooser` class, which is like:
 
 ```cpp
 template <typename T, int N>
@@ -414,6 +414,9 @@ And is helped by the following constructs:
 OBFY_DEFINE_EXTRA(0, extra_xor);
 OBFY_DEFINE_EXTRA(1, extra_substraction);
 OBFY_DEFINE_EXTRA(2, extra_addition);
+OBFY_DEFINE_EXTRA(3, extra_rot);
+OBFY_DEFINE_EXTRA(4, extra_bswap);
+OBFY_DEFINE_EXTRA(5, extra_affine);
 ```
 
 Which is the actual definition of the classes for the extra operations, which in their turn look like:
@@ -437,7 +440,7 @@ private:
     volatile T& v;
 };
 ```
-Where the extra addition and substraction are also very similar.
+Where the extra addition and substraction are also very similar. The rotation, byte-swap and affine variants operate on unsigned integer representations and undo their work in the destructor so the wrapped value remains unchanged.
 
 The next thing we observe is that an object of this kind (ie. extra bogus operation chooser) is defined in a lambda function for the variable we are wrapping. The variable name for this is determined by `_JOIN(_ec_,__COUNTER__)(a)`, where `_JOIN` is just a simple joiner macro:
 
