@@ -1,6 +1,10 @@
-#define BOOST_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/auto_unit_test.hpp>
+#ifdef OBFY_DEBUG
+#define BOOST_TEST_MODULE obfy_debug_tests
+#else
+#define BOOST_TEST_MODULE obfy_tests
+#endif
+#include <boost/test/unit_test.hpp>
 #define BOOST_AUTO_TEST_OBFY_CASE BOOST_AUTO_TEST_CASE
 
 #include <obfy/obfy.hpp>

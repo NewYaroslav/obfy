@@ -23,6 +23,11 @@ if(OBFY_BUILD_TESTS)
     target_link_libraries(obfy_tests PRIVATE obfy Boost::unit_test_framework)
     target_compile_definitions(obfy_tests PRIVATE UNIT_TESTS)
     add_test(NAME obfy_tests COMMAND obfy_tests)
+
+    add_executable(obfy_tests_debug tests/obfy_tests.cpp example/main.cpp)
+    target_link_libraries(obfy_tests_debug PRIVATE obfy Boost::unit_test_framework)
+    target_compile_definitions(obfy_tests_debug PRIVATE UNIT_TESTS OBFY_DEBUG)
+    add_test(NAME obfy_tests_debug COMMAND obfy_tests_debug)
 endif()
 
 install(TARGETS obfy)
