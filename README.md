@@ -36,7 +36,7 @@ OBFY offers lightweight compile-time obfuscation for strings and numeric constan
 
 | Approach | Protects | Against | Cost |
 | --- | --- | --- | --- |
-| Lightweight obfuscation (`OBFY_STR`, wrappers) | Encodes literals at compile time, decodes on first use | Simple static searches, single-key XOR scans | Low — header-only, minimal runtime overhead |
+| Lightweight obfuscation (`OBFY_STR`, wrappers, `OBFY_CALL`) | Encodes literals at compile time, decodes on first use, hides call targets | Simple static searches, single-key XOR scans | Low — header-only, minimal runtime overhead |
 | Full protection (packers, virtualization, anti-tamper) | Entire binary with anti-debug and integrity checks | Skilled reverse engineers, automated tooling | High — external tools, performance and licensing cost |
 
 # Building
@@ -1231,6 +1231,15 @@ String literals can be protected with `OBFY_STR`. The characters are encoded at 
 
 ```cpp
 const char* hello = OBFY_STR("hello world");
+```
+
+Function calls can be wrapped with macros from `include/obfy/obfy_call.hpp`. Defining
+`OBFY_ENABLE_FSM_CALL` inserts a tiny state machine before invoking the target, making
+control-flow tracing harder.
+
+```cpp
+int result = OBFY_CALL_RET(int, add, 2, 3);
+OBFY_CALL(print_message, "hi");
 ```
 
 For floating point constants you can assemble them from integers with `OBFY_RATIO_D` or `OBFY_RATIO_F`, e.g. `double pi = OBFY_RATIO_D(314, 100);`. These macros divide the obfuscated numerator and denominator at runtime. If an exact IEEE-754 bit pattern is required, store the bits as an integer and recover the value via `OBFY_BIT_CAST`.
