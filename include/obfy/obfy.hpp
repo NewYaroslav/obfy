@@ -40,7 +40,7 @@
 #endif
 
 #ifndef OBFY_MAX_BOGUS_IMPLEMENTATIONS
-#define OBFY_MAX_BOGUS_IMPLEMENTATIONS 3
+#define OBFY_MAX_BOGUS_IMPLEMENTATIONS 6
 #endif
 
 namespace obfy
@@ -877,6 +877,153 @@ public:
     extra_substraction(const T&) {}
 };
 
+// Bit rotation by a random amount
+template <class T>
+class extra_rot final : public basic_extra
+{
+public:
+    explicit extra_rot(T& a) : v(a)
+    {
+        typedef typename std::make_unsigned<T>::type U;
+        const unsigned bits = sizeof(U)*8u;
+        const unsigned r = MetaRandom<__COUNTER__, 8*sizeof(U)>::value % bits;
+        rot_ = r ? r : 1;
+        U u = static_cast<U>(v);
+        v = static_cast<T>((u << rot_) | (u >> (bits - rot_)));
+    }
+    ~extra_rot()
+    {
+        typedef typename std::make_unsigned<T>::type U;
+        const unsigned bits = sizeof(U)*8u;
+        U u = static_cast<U>(v);
+        v = static_cast<T>((u >> rot_) | (u << (bits - rot_)));
+    }
+private:
+    volatile T& v;
+    unsigned rot_{1};
+};
+
+template <class T>
+class extra_rot <const T> final : public basic_extra
+{
+public:
+    extra_rot(const T&) {}
+};
+
+template <>
+class extra_rot<float> final : public basic_extra
+{
+public:
+    extra_rot(float&) {}
+};
+
+template <>
+class extra_rot<double> final : public basic_extra
+{
+public:
+    extra_rot(double&) {}
+};
+
+// Byte swap for common integer sizes
+template <class T>
+class extra_bswap final : public basic_extra
+{
+public:
+    explicit extra_bswap(T& a) : v(a)
+    {
+        typedef typename std::make_unsigned<T>::type U;
+        v = static_cast<T>(bswap(static_cast<U>(v)));
+    }
+    ~extra_bswap()
+    {
+        typedef typename std::make_unsigned<T>::type U;
+        v = static_cast<T>(bswap(static_cast<U>(v)));
+    }
+private:
+    static inline uint16_t bswap(uint16_t x){ return static_cast<uint16_t>((x<<8)|(x>>8)); }
+    static inline uint32_t bswap(uint32_t x){ return (x<<24)|((x&0xFF00)<<8)|((x&0xFF0000)>>8)|(x>>24); }
+    static inline uint64_t bswap(uint64_t x){
+        return (x<<56) | ((x&0xFF00ull)<<40) | ((x&0xFF0000ull)<<24) | ((x&0xFF000000ull)<<8) |
+               ((x&0xFF00000000ull)>>8) | ((x&0xFF0000000000ull)>>24) |
+               ((x&0xFF000000000000ull)>>40) | (x>>56);
+    }
+    template<class U> static U bswap(U x){ return x; }
+    volatile T& v;
+};
+
+template <class T>
+class extra_bswap <const T> final : public basic_extra
+{
+public:
+    extra_bswap(const T&) {}
+};
+
+template <>
+class extra_bswap<float> final : public basic_extra
+{
+public:
+    extra_bswap(float&) {}
+};
+
+template <>
+class extra_bswap<double> final : public basic_extra
+{
+public:
+    extra_bswap(double&) {}
+};
+
+// Affine transform x = x * m + b mod 2^N
+template <class T>
+class extra_affine final : public basic_extra
+{
+public:
+    explicit extra_affine(T& a) : v(a)
+    {
+        typedef typename std::make_unsigned<T>::type U;
+        const U bits = sizeof(U)*8u;
+        m_ = (static_cast<U>(MetaRandom<__COUNTER__, 1u<<12>::value) | 1u);
+        b_ = static_cast<U>(MetaRandom<__COUNTER__, 1u<<12>::value);
+        inv_ = inv_odd_pow2(m_, bits);
+        U u = static_cast<U>(v);
+        v = static_cast<T>(u * m_ + b_);
+    }
+    ~extra_affine()
+    {
+        typedef typename std::make_unsigned<T>::type U;
+        U u = static_cast<U>(v);
+        v = static_cast<T>((u - b_) * inv_);
+    }
+private:
+    static uint64_t inv_odd_pow2(uint64_t x, unsigned bits){
+        uint64_t inv = 1;
+        for (unsigned i=0; i<6; ++i) inv *= (2 - x*inv);
+        return (bits<64) ? (inv & ((1ull<<bits)-1)) : inv;
+    }
+    volatile T& v;
+    typename std::make_unsigned<T>::type m_{1}, b_{0}, inv_{1};
+};
+
+template <class T>
+class extra_affine <const T> final : public basic_extra
+{
+public:
+    extra_affine(const T&) {}
+};
+
+template <>
+class extra_affine<float> final : public basic_extra
+{
+public:
+    extra_affine(float&) {}
+};
+
+template <>
+class extra_affine<double> final : public basic_extra
+{
+public:
+    extra_affine(double&) {}
+};
+
 template <typename T, int N>
 class extra_chooser final
 {
@@ -973,6 +1120,9 @@ OBFY_TYPE(unsigned long long int)
 OBFY_DEFINE_EXTRA(0, extra_xor);
 OBFY_DEFINE_EXTRA(1, extra_substraction);
 OBFY_DEFINE_EXTRA(2, extra_addition);
+OBFY_DEFINE_EXTRA(3, extra_rot);
+OBFY_DEFINE_EXTRA(4, extra_bswap);
+OBFY_DEFINE_EXTRA(5, extra_affine);
 #define OBFY_V(a) ([&](){obfy::extra_chooser<std::remove_reference<decltype(a)>::type, obfy::MetaRandom<__COUNTER__, \
             OBFY_MAX_BOGUS_IMPLEMENTATIONS>::value >::type OBFY_JOIN(_ec_,__COUNTER__)(a);\
             return obfy::stream_helper();}() << a)

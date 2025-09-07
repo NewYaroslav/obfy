@@ -5,6 +5,23 @@
 
 #include <obfy/obfy.hpp>
 #include <stdint.h>
+#include <limits>
+
+template<template<class> class Extra, typename T>
+static void roundtrip(T value)
+{
+    T original = value;
+    { Extra<T> op(value); }
+    BOOST_CHECK_EQUAL(value, original);
+}
+
+template<template<class> class Extra, typename T>
+static void test_type(T rnd)
+{
+    roundtrip<Extra>(static_cast<T>(0));
+    roundtrip<Extra>(std::numeric_limits<T>::max());
+    roundtrip<Extra>(rnd);
+}
 
 int numeric_wrapper_returner();
 int simple_variable_wrapper_min_eq();
@@ -120,5 +137,23 @@ BOOST_AUTO_TEST_OBFY_CASE(float_variable_wrapper)
     OBFY_V(d) = 2.0;
     OBFY_V(d) *= 1.5;
     BOOST_CHECK_CLOSE(d, 3.0, 0.001);
+}
+
+BOOST_AUTO_TEST_OBFY_CASE(extra_operations_roundtrip)
+{
+    test_type<obfy::extra_rot, uint8_t>(static_cast<uint8_t>(0xA5));
+    test_type<obfy::extra_rot, uint16_t>(static_cast<uint16_t>(0xBEEF));
+    test_type<obfy::extra_rot, uint32_t>(0xDEADBEEFu);
+    test_type<obfy::extra_rot, uint64_t>(0x0123456789ABCDEFULL);
+
+    test_type<obfy::extra_bswap, uint8_t>(static_cast<uint8_t>(0xA5));
+    test_type<obfy::extra_bswap, uint16_t>(static_cast<uint16_t>(0xBEEF));
+    test_type<obfy::extra_bswap, uint32_t>(0xDEADBEEFu);
+    test_type<obfy::extra_bswap, uint64_t>(0x0123456789ABCDEFULL);
+
+    test_type<obfy::extra_affine, uint8_t>(static_cast<uint8_t>(0xA5));
+    test_type<obfy::extra_affine, uint16_t>(static_cast<uint16_t>(0xBEEF));
+    test_type<obfy::extra_affine, uint32_t>(0xDEADBEEFu);
+    test_type<obfy::extra_affine, uint64_t>(0x0123456789ABCDEFULL);
 }
 
