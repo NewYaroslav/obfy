@@ -24,6 +24,15 @@ cmake -S . -B build
 cmake --build build
 ```
 
+## Obfuscation vs Protection
+
+OBFY offers lightweight compile-time obfuscation for strings and numeric constants. It complicates casual static inspection but is **not** a full protection suite.
+
+| Approach | Protects | Against | Cost |
+| --- | --- | --- | --- |
+| Lightweight obfuscation (`OBFY_STR`, wrappers) | Encodes literals at compile time, decodes on first use | Simple static searches, single-key XOR scans | Low — header-only, minimal runtime overhead |
+| Full protection (packers, virtualization, anti-tamper) | Entire binary with anti-debug and integrity checks | Skilled reverse engineers, automated tooling | High — external tools, performance and licensing cost |
+
 # Building
 
 This project uses CMake. To build the example program and unit tests run:
