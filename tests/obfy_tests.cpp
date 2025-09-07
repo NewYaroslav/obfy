@@ -3,7 +3,8 @@
 #include <boost/test/auto_unit_test.hpp>
 #define BOOST_AUTO_TEST_OBFY_CASE BOOST_AUTO_TEST_CASE
 
-#include <obfy/obfy.hpp>
+#define OBFY_ENABLE_FSM_CALL
+#include <obfy/obfy_call.hpp>
 #include <stdint.h>
 #include <limits>
 #include <memory>
@@ -179,5 +180,16 @@ BOOST_AUTO_TEST_OBFY_CASE(extra_operations_roundtrip)
     test_type<obfy::extra_affine, uint16_t>(static_cast<uint16_t>(0xBEEF));
     test_type<obfy::extra_affine, uint32_t>(0xDEADBEEFu);
     test_type<obfy::extra_affine, uint64_t>(0x0123456789ABCDEFULL);
+}
+
+OBFY_NOINLINE static int add_obf(int a, int b) { return a + b; }
+OBFY_NOINLINE static void inc_obf(int& x) { ++x; }
+
+BOOST_AUTO_TEST_OBFY_CASE(obfuscated_call)
+{
+    BOOST_CHECK_EQUAL(OBFY_CALL_RET(int, add_obf, 40, 2), 42);
+    int v = 1;
+    OBFY_CALL(inc_obf, v);
+    BOOST_CHECK_EQUAL(v, 2);
 }
 
