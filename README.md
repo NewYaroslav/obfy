@@ -181,6 +181,24 @@ Or in CMake:
 add_compile_definitions(OBFY_SEED=123456)
 ```
 
+At runtime obfy applies an extra tweak by mixing the current process ID,
+the address of a stack variable and the current time through `mix64`.
+This per-run value is combined with `OBFY_SEED`, making static analysis harder.
+Define `OBFY_DISABLE_RUNTIME_TWEAK` to turn it off:
+
+```bash
+g++ ...                        # runtime tweak enabled
+g++ ... -DOBFY_DISABLE_RUNTIME_TWEAK  # disabled
+```
+
+Or in CMake:
+
+```cmake
+add_compile_definitions(OBFY_DISABLE_RUNTIME_TWEAK)
+```
+
+Disabling the tweak makes keys deterministic and simplifies static analysis.
+
 ### Translation-unit salt
 
 Each translation unit gets its own salt by hashing the file name. Override the
