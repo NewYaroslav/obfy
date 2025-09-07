@@ -244,8 +244,6 @@ public:
 
     /* Comparison */
     bool operator==(const T& ov) const {
-        static_assert(!std::is_floating_point<T>::value,
-                      "refholder does not support floating point types");
         T tmp = v;
         typedef std::integral_constant<bool,
             std::is_integral<T>::value || std::is_enum<T>::value> is_int;
@@ -788,6 +786,52 @@ class extra_xor <const T> final : public basic_extra
 {
 public:
     extra_xor(const T&) {}
+};
+
+template <>
+class extra_xor<float> final : public basic_extra
+{
+public:
+    extra_xor(float& a) : v(a)
+    {
+        uint32_t lv = static_cast<uint32_t>(MetaRandom<__COUNTER__, 4096>::value);
+        uint32_t tmp = obfy_bit_cast<uint32_t>(static_cast<float>(v));
+        tmp ^= lv;
+        v = obfy_bit_cast<float>(tmp);
+    }
+    virtual ~extra_xor()
+    {
+        uint32_t lv = static_cast<uint32_t>(MetaRandom<__COUNTER__ - 1, 4096>::value);
+        uint32_t tmp = obfy_bit_cast<uint32_t>(static_cast<float>(v));
+        tmp ^= lv;
+        v = obfy_bit_cast<float>(tmp);
+    }
+
+private:
+    volatile float& v;
+};
+
+template <>
+class extra_xor<double> final : public basic_extra
+{
+public:
+    extra_xor(double& a) : v(a)
+    {
+        uint64_t lv = static_cast<uint64_t>(MetaRandom<__COUNTER__, 4096>::value);
+        uint64_t tmp = obfy_bit_cast<uint64_t>(static_cast<double>(v));
+        tmp ^= lv;
+        v = obfy_bit_cast<double>(tmp);
+    }
+    virtual ~extra_xor()
+    {
+        uint64_t lv = static_cast<uint64_t>(MetaRandom<__COUNTER__ - 1, 4096>::value);
+        uint64_t tmp = obfy_bit_cast<uint64_t>(static_cast<double>(v));
+        tmp ^= lv;
+        v = obfy_bit_cast<double>(tmp);
+    }
+
+private:
+    volatile double& v;
 };
 
 template <class T>

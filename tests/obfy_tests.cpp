@@ -103,3 +103,16 @@ BOOST_AUTO_TEST_OBFY_CASE(bit_cast_macro)
     BOOST_CHECK_EQUAL(OBFY_BIT_CAST(uint64_t, rd), b64);
 }
 
+BOOST_AUTO_TEST_OBFY_CASE(float_variable_wrapper)
+{
+    float f = 0.0f;
+    OBFY_V(f) = 1.5f;
+    OBFY_V(f) += 2.25f;
+    BOOST_CHECK_CLOSE(static_cast<double>(f), 3.75, 0.001);
+
+    double d = 0.0;
+    OBFY_V(d) = 2.0;
+    OBFY_V(d) *= 1.5;
+    BOOST_CHECK_CLOSE(d, 3.0, 0.001);
+}
+
