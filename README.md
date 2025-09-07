@@ -1207,6 +1207,8 @@ This brings us back to the swampy area of C++ and macros. There are several voic
 
 And last, but not least, the numeric value wrappers do not work with floating point numbers. This is due to the fact that extensive binary operations are used on the number to obfuscate its value and this would be impossible to accomplish with floating point values.
 
+For occasional floating point constants you can assemble them from integers with `OBFY_RATIO_D` or `OBFY_RATIO_F`, e.g. `double pi = OBFY_RATIO_D(314, 100);`. These macros divide the obfuscated numerator and denominator at runtime. If an exact IEEE-754 bit pattern is required, store the bits as an integer and recover the value via `OBFY_BIT_CAST`.
+
 # Some requirements
 
 The code is written also with "older" compilers in mind, so not all the latest and greatest features of C++14 and 17 are being included. CLang version 3.4.1 happily compiles the source code, so does g++ 4.8.2. Visual Studio 2015 is also compiling the code.

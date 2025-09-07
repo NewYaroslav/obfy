@@ -32,6 +32,7 @@
 #include <utility>
 #include <stdint.h>
 #include <ctime>
+#include <cstring>
 #if defined(_WIN32)
 #include <windows.h>
 #else
@@ -154,6 +155,30 @@ namespace detail {
 #endif
 
 static constexpr unsigned seed = static_cast<unsigned>(OBFY_SEED);
+
+template <class To, class From>
+inline To obfy_bit_cast(const From& src) {
+    static_assert(sizeof(To) == sizeof(From), "size mismatch");
+    static_assert(std::is_trivially_copyable<From>::value, "From must be trivially copyable");
+    static_assert(std::is_trivially_copyable<To>::value, "To must be trivially copyable");
+    To dst;
+    std::memcpy(&dst, &src, sizeof(To));
+    return dst;
+}
+
+namespace detail {
+
+    template<typename T, typename WNum, typename WDen>
+    inline T ratio_impl(const WNum& n_wrapped, const WDen& d_wrapped) {
+        const double num = static_cast<double>(n_wrapped);
+        const double den = static_cast<double>(d_wrapped);
+        if (den == 0.0) {
+            return static_cast<T>(0);
+        }
+        return static_cast<T>(num / den);
+    }
+
+} // namespace detail
 
 template<class T>
 struct obfy_is_intish : std::integral_constant<bool,
@@ -947,6 +972,12 @@ OBFY_DEFINE_EXTRA(2, extra_addition);
 #define OBFY_DEFAULT add_default(obfy::body([&](){
 
 #endif
+
+#define OBFY_RATIO_D(NUM, DEN) (::obfy::detail::ratio_impl<double>(OBFY_N(NUM), OBFY_N(DEN)))
+#define OBFY_RATIO_F(NUM, DEN) (::obfy::detail::ratio_impl<float >(OBFY_N(NUM), OBFY_N(DEN)))
+
+// Convenience macro for safe bit-wise casting between trivially copyable types.
+#define OBFY_BIT_CAST(To, From) (::obfy::obfy_bit_cast<To>(From))
 
 } // namespace obfy
 
