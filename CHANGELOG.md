@@ -8,4 +8,5 @@ All notable changes to this project will be documented in this file.
 - Provided compile-time string obfuscation via `OBFY_STR` and related helpers.
 - Introduced numeric and control-flow obfuscation wrappers.
 - Renamed multiple macros for clarity and consistency.
+- Added obfuscated byte block macros `OBFY_BYTES` and `OBFY_BYTES_ONCE`.
 

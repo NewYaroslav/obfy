@@ -9,6 +9,7 @@
 
 #define OBFY_ENABLE_FSM_CALL
 #include <obfy/obfy_call.hpp>
+#include <obfy/obfy_bytes.hpp>
 #include <stdint.h>
 #include <limits>
 #include <memory>
@@ -132,6 +133,18 @@ BOOST_AUTO_TEST_OBFY_CASE(string_literal)
     BOOST_CHECK_EQUAL(std::string(OBFY_STR("")), "");
     BOOST_CHECK_EQUAL(std::string(OBFY_STR_ONCE("test once")), "test once");
     BOOST_CHECK(std::wstring(OBFY_WSTR(L"wide")) == L"wide");
+}
+
+BOOST_AUTO_TEST_OBFY_CASE(byte_block)
+{
+    const unsigned char* data = OBFY_BYTES("\x01\x02\x03\x04");
+    BOOST_CHECK_EQUAL(data[0], 0x01);
+    BOOST_CHECK_EQUAL(data[3], 0x04);
+
+    auto once = OBFY_BYTES_ONCE("\x05\x06");
+    BOOST_CHECK_EQUAL(once.size(), 2u);
+    BOOST_CHECK_EQUAL(once.data()[0], 0x05);
+    BOOST_CHECK_EQUAL(once.data()[1], 0x06);
 }
 
 BOOST_AUTO_TEST_OBFY_CASE(float_variable_wrapper)
