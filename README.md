@@ -15,6 +15,8 @@ of protection.
 - **TU-salt controls**: `OBFY_FILE_FOR_HASH`, `OBFY_TU_SALT`;
 - **build system cleanup** (CMake options; tests/examples toggles).
 
+> Define a non-zero `OBFY_TU_SALT` globally (e.g. via `-DOBFY_TU_SALT=0x1234`) to further diversify keys across translation units.
+
 ## Quick Start
 
 Add the library to your CMake project:

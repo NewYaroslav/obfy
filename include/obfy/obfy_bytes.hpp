@@ -62,10 +62,6 @@ namespace detail {
 } // namespace detail
 } // namespace obfy
 
-#ifndef OBFY_TU_SALT
-#  define OBFY_TU_SALT 0ull // define to a non-zero per translation unit salt
-#endif
-
 #define OBFY_DEF_BYTES(b) /* b must be a string literal or static array */ \
     ::obfy::detail::obf_bytes_impl< \
         static_cast<unsigned char>(::obfy::MetaRandom<__COUNTER__, 256>::value ^ static_cast<unsigned char>((OBFY_TU_SALT >> 0) & 0xFF)), \
@@ -74,6 +70,7 @@ namespace detail {
         ::obfy::detail::make_index_sequence<sizeof(b) - 1>>
 
 #define OBFY_BYTES(b) ([](){ static OBFY_DEF_BYTES(b) _obfy_bytes{ b }; return _obfy_bytes.decrypt(); }())
+// `OBFY_BYTES_ONCE` returns a temporary wiping its contents on destruction.
 #define OBFY_BYTES_ONCE(b) ([](){ OBFY_DEF_BYTES(b) _obfy_bytes{ b }; return _obfy_bytes.decrypt_once(); }())
 
 #endif // __OBFY_BYTES_HPP__

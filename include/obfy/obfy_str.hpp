@@ -20,8 +20,9 @@ namespace detail {
         alignas(Char) unsigned char data[sizeof...(I) + sizeof(Char)];
         mutable std::once_flag once_;
         template<std::size_t N>
-        constexpr obf_string_impl(const Char (&s)[N])
+        obf_string_impl(const Char (&s)[N])
             : data{ encode(reinterpret_cast<const unsigned char*>(s)[I], I)... } {}
+        static_assert((sizeof...(I) % sizeof(Char)) == 0, "byte count must be multiple of Char");
         const Char* decrypt() {
             std::call_once(once_, [&]{
                 for (std::size_t i = 0; i < sizeof...(I); ++i)
@@ -60,10 +61,6 @@ namespace detail {
 } // namespace detail
 } // namespace obfy
 
-#ifndef OBFY_TU_SALT
-#  define OBFY_TU_SALT 0ull
-#endif
-
 #define OBFY_DEF_STR_T(Char, s) \
     ::obfy::detail::obf_string_impl<Char, \
         static_cast<unsigned char>(::obfy::MetaRandom<__COUNTER__, 256>::value ^ static_cast<unsigned char>((OBFY_TU_SALT >> 0) & 0xFF)), \
@@ -76,6 +73,8 @@ namespace detail {
 
 #define OBFY_STR(s) ([](){ static OBFY_DEF_STR(s) _obfy_str{ s }; return _obfy_str.decrypt(); }())
 #define OBFY_WSTR(s) ([](){ static OBFY_DEF_WSTR(s) _obfy_wstr{ s }; return _obfy_wstr.decrypt(); }())
+// `*_ONCE` macros return a temporary wiping its contents on destruction.
+// `c_str()` remains valid only for the full expression.
 #define OBFY_STR_ONCE(s) ([](){ OBFY_DEF_STR(s) _obfy_str{ s }; return _obfy_str.decrypt_once(); }())
 #define OBFY_WSTR_ONCE(s) ([](){ OBFY_DEF_WSTR(s) _obfy_wstr{ s }; return _obfy_wstr.decrypt_once(); }())
 
