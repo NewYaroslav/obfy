@@ -175,6 +175,12 @@ By default obfy seeds its compile-time random generator from `__TIME__`, produci
 g++ ... -DOBFY_SEED=0xDEADBEEF
 ```
 
+For test or reproducible builds you may also disable the runtime tweak:
+
+```bash
+g++ ... -DOBFY_SEED=0x12345678 -DOBFY_DISABLE_RUNTIME_TWEAK
+```
+
 Or in CMake:
 
 ```cmake
@@ -281,7 +287,7 @@ void log_message() {
 
 #### Value and numerical wrappers
 
-To achieve an extra layer of obfuscation, the integral numerical values can be wrapped in the macro `OBFY_N()` and all integral numeric variables (`int`, `long`, ...) can be wrapped in the macro `OBFY_V()` to provide an extra layer of obfuscation for doing the calculation operations. The `OBFY_V()` value wrapper also can wrap individual array elements(`x[2]`), but not arrays (`x`) and also cannot wrap class instantiation values due to the fact that the macro expands to a reference holder object.
+To achieve an extra layer of obfuscation, the integral numerical values can be wrapped in the macro `OBFY_N()` and all integral numeric variables (`int`, `long`, ...) can be wrapped in the macro `OBFY_V()` to provide an extra layer of obfuscation for doing the calculation operations. The argument to `OBFY_N` must be a constant expression of an integral or enumeration type. The `OBFY_V()` value wrapper also can wrap individual array elements(`x[2]`), but not arrays (`x`) and also cannot wrap class instantiation values due to the fact that the macro expands to a reference holder object.
 
 The implementation of the wrappers uses the link time random number generator provided by [Andrivet] and the values are obfuscated by performing various operations to hide the original value.
 

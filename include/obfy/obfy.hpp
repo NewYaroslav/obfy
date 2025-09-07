@@ -155,6 +155,10 @@ namespace detail {
 
 static constexpr unsigned seed = static_cast<unsigned>(OBFY_SEED);
 
+template<class T>
+struct obfy_is_intish : std::integral_constant<bool,
+    std::is_integral<T>::value || std::is_enum<T>::value> {};
+
 template<int N>
 struct MetaRandomGenerator final
 {
@@ -215,6 +219,8 @@ public:
 
     /* Comparison */
     bool operator==(const T& ov) const {
+        static_assert(!std::is_floating_point<T>::value,
+                      "refholder does not support floating point types");
         T tmp = v;
         typedef std::integral_constant<bool,
             std::is_integral<T>::value || std::is_enum<T>::value> is_int;
@@ -890,9 +896,9 @@ OBFY_TYPE(unsigned long long int)
 #else
 #define OBFY_JOIN(a,b) a##b
 #ifndef OBFY_DISABLE_RUNTIME_TWEAK
-#define OBFY_N(a) ([](){ constexpr uint64_t _obfy_k64 = OBFY_LOCAL_KEY(); volatile uint64_t _obfy_rt = ::obfy::detail::runtime_tweak_seed(); uint64_t _obfy_mix = _obfy_k64 ^ _obfy_rt; using _obfy_T = decltype(a); using _obfy_U = typename std::make_unsigned<_obfy_T>::type; return static_cast<_obfy_T>(obfy::Num<_obfy_U, static_cast<_obfy_U>(_obfy_k64 ^ static_cast<uint64_t>(a))>().get() ^ _obfy_mix ^ _obfy_rt); }())
+#define OBFY_N(a) ([](){ constexpr uint64_t _obfy_k64 = OBFY_LOCAL_KEY(); const volatile uint64_t _obfy_rt = ::obfy::detail::runtime_tweak_seed(); uint64_t _obfy_mix = _obfy_k64 ^ _obfy_rt; using _obfy_T = decltype(a); static_assert(::obfy::obfy_is_intish<_obfy_T>::value, "OBFY_N expects integral/enum constant"); using _obfy_U = typename std::make_unsigned<_obfy_T>::type; return static_cast<_obfy_T>(obfy::Num<_obfy_U, static_cast<_obfy_U>(_obfy_k64 ^ static_cast<uint64_t>(a))>().get() ^ _obfy_mix ^ _obfy_rt); }())
 #else
-#define OBFY_N(a) ([](){ constexpr uint64_t _obfy_k64 = OBFY_LOCAL_KEY(); using _obfy_T = decltype(a); using _obfy_U = typename std::make_unsigned<_obfy_T>::type; return static_cast<_obfy_T>(obfy::Num<_obfy_U, static_cast<_obfy_U>(_obfy_k64 ^ static_cast<uint64_t>(a))>().get() ^ static_cast<_obfy_U>(_obfy_k64)); }())
+#define OBFY_N(a) ([](){ constexpr uint64_t _obfy_k64 = OBFY_LOCAL_KEY(); using _obfy_T = decltype(a); static_assert(::obfy::obfy_is_intish<_obfy_T>::value, "OBFY_N expects integral/enum constant"); using _obfy_U = typename std::make_unsigned<_obfy_T>::type; return static_cast<_obfy_T>(obfy::Num<_obfy_U, static_cast<_obfy_U>(_obfy_k64 ^ static_cast<uint64_t>(a))>().get() ^ static_cast<_obfy_U>(_obfy_k64)); }())
 #endif
 #define OBFY_DEFINE_EXTRA(N,implementer) template <typename T> struct extra_chooser<T,N> { using type = implementer<T>; }
 OBFY_DEFINE_EXTRA(0, extra_xor);
