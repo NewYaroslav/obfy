@@ -99,14 +99,8 @@ namespace detail {
     }
 #endif
 
-    inline uint64_t& runtime_tweak_counter() {
-        static uint64_t counter = 0;
-        return counter;
-    }
-
 #ifndef OBFY_DISABLE_RUNTIME_TWEAK
     inline uint64_t runtime_tweak() {
-        ++runtime_tweak_counter();
         int _obfy_dummy = 0;
 #if defined(_WIN32)
         uint64_t pid = static_cast<uint64_t>(GetCurrentProcessId());
