@@ -7,6 +7,7 @@
 #include <array>
 
 #include <obfy/obfy.hpp>
+#include <obfy/meta.hpp>
 
 namespace obfy {
 namespace detail {
@@ -18,9 +19,16 @@ namespace detail {
     struct obf_bytes_impl<K1, K2, K3, index_sequence<I...>> {
         unsigned char data[sizeof...(I)];
         mutable std::once_flag once_;
+
         template<std::size_t N>
         constexpr obf_bytes_impl(const char (&s)[N])
-            : data{ encode(reinterpret_cast<const unsigned char*>(s)[I], I)... } {}
+            : data{ encode(static_cast<unsigned char>(s[I]), I)... } {}
+
+        static constexpr std::size_t size_static() { return sizeof...(I); }
+        std::size_t size() const { return sizeof...(I); }
+
+        // decrypt() decodes bytes once and keeps them in place.
+        // For sensitive data prefer decrypt_once().
         const unsigned char* decrypt() {
             std::call_once(once_, [&]{
                 for (std::size_t i = 0; i < sizeof...(I); ++i)
@@ -29,8 +37,11 @@ namespace detail {
             return data;
         }
         struct tmp_block {
-            std::array<unsigned char, sizeof...(I)> bytes;
-            ~tmp_block() { for (std::size_t i = 0; i < bytes.size(); ++i) bytes[i] = 0; }
+            std::array<unsigned char, sizeof...(I)> bytes{};
+            ~tmp_block() {
+                volatile unsigned char* p = bytes.data();
+                for (std::size_t i = 0; i < bytes.size(); ++i) p[i] = 0;
+            }
             const unsigned char* data() const { return bytes.data(); }
             std::size_t size() const { return bytes.size(); }
         };
@@ -52,10 +63,10 @@ namespace detail {
 } // namespace obfy
 
 #ifndef OBFY_TU_SALT
-#  define OBFY_TU_SALT 0ull
+#  define OBFY_TU_SALT 0ull // define to a non-zero per translation unit salt
 #endif
 
-#define OBFY_DEF_BYTES(b) \
+#define OBFY_DEF_BYTES(b) /* b must be a string literal or static array */ \
     ::obfy::detail::obf_bytes_impl< \
         static_cast<unsigned char>(::obfy::MetaRandom<__COUNTER__, 256>::value ^ static_cast<unsigned char>((OBFY_TU_SALT >> 0) & 0xFF)), \
         static_cast<unsigned char>(::obfy::MetaRandom<__COUNTER__, 256>::value ^ static_cast<unsigned char>((OBFY_TU_SALT >> 8) & 0xFF)), \

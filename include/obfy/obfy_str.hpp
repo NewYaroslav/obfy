@@ -7,21 +7,10 @@
 #include <string>
 
 #include <obfy/obfy.hpp>
+#include <obfy/meta.hpp>
 
 namespace obfy {
 namespace detail {
-
-    template<std::size_t... I>
-    struct index_sequence { };
-
-    template<std::size_t N, std::size_t... I>
-    struct make_index_sequence_impl : make_index_sequence_impl<N-1, N-1, I...> { };
-
-    template<std::size_t... I>
-    struct make_index_sequence_impl<0, I...> { using type = index_sequence<I...>; };
-
-    template<std::size_t N>
-    using make_index_sequence = typename make_index_sequence_impl<N>::type;
 
     template<typename Char, unsigned char K1, unsigned char K2, unsigned char K3, typename Seq>
     struct obf_string_impl;
