@@ -1,6 +1,6 @@
-# obfy
+# OBFY
 
-obfy is a header-only C++ library for code obfuscation. It offers a set of macros and
+OBFY is a *header-only* C++ library for code obfuscation. It offers a set of macros and
 lightweight wrappers that expand straightforward constructs into randomized sequences of
 operations, increasing the effort required for reverse engineering and bypassing basic
 license checks. The library targets developers who need a minimal, dependency-free layer
@@ -26,14 +26,17 @@ cmake --build build
 
 # Building
 
-This project uses CMake. To build the example program run:
+This project uses CMake. To build the example program and unit tests run:
 
 ```
 cmake -S . -B build
 cmake --build build
 ```
 
-The resulting executable can be found at `build/example`. To install the
+The example program and unit tests are built by default. Disable them with
+`-DOBFY_BUILD_EXAMPLE=OFF` or `-DOBFY_BUILD_TESTS=OFF`.
+
+The resulting example executable can be found at `build/example`. To install the
 headers system-wide, use:
 
 ```
@@ -1221,4 +1224,5 @@ std::string generate_license(const char* user) {
 [Wakely] - Stop the Constant Shouting- Overload Journal #121 - June 2014, Jonathan Wakely
 
 [Stackoverflow] - http://stackoverflow.com/questions/12387239/reference-member-variables-as-class-members
+
 
