@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(obfy LANGUAGES CXX)
+project(obfy VERSION 1.0.0 LANGUAGES CXX)
 
 add_library(obfy INTERFACE)
 target_include_directories(obfy INTERFACE
