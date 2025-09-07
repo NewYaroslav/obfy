@@ -107,6 +107,8 @@ BOOST_AUTO_TEST_OBFY_CASE(string_literal)
 {
     BOOST_CHECK_EQUAL(std::string(OBFY_STR("test")), "test");
     BOOST_CHECK_EQUAL(std::string(OBFY_STR("")), "");
+    BOOST_CHECK_EQUAL(std::string(OBFY_STR_ONCE("test once")), "test once");
+    BOOST_CHECK(std::wstring(OBFY_WSTR(L"wide")) == L"wide");
 }
 
 BOOST_AUTO_TEST_OBFY_CASE(float_variable_wrapper)
