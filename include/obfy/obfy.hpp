@@ -215,11 +215,11 @@ struct MetaRandom final
 };
 
 #define OBFY_COMP_ASSIGNMENT_OPERATOR(x) \
-    refholder<T>& operator x##= (const refholder<T>& ov) { v x##= ov.v; return *this;}  \
-    refholder<T>& operator x##= (const refholder<T>&& ov) { v x##= ov.v; return *this;} \
-    refholder<T>& operator x##= (const T& ov) { v x##= ov; return *this;}               \
-    refholder<T>& operator x##= (const T&& ov) { v x##= ov; return *this;}              \
-    refholder<T>& operator x##= (T& ov) { v x##= ov; return *this;}
+    refholder<T>& operator x##= (const refholder<T>& ov) { const_cast<T&>(v) x##= const_cast<T&>(ov.v); return *this;}  \
+    refholder<T>& operator x##= (refholder<T>&& ov) { const_cast<T&>(v) x##= std::move(const_cast<T&>(ov.v)); return *this;} \
+    refholder<T>& operator x##= (const T& ov) { const_cast<T&>(v) x##= ov; return *this;}               \
+    refholder<T>& operator x##= (T&& ov) { const_cast<T&>(v) x##= std::move(ov); return *this;}         \
+    refholder<T>& operator x##= (T& ov) { const_cast<T&>(v) x##= ov; return *this;}
 
 
 #define OBFY_COMPARISON_OPERATOR(x) \
@@ -232,15 +232,18 @@ class refholder final
 public:
     /* Construction, destruction */
     refholder() = delete;
-    refholder(T& pv) : v(pv) {}
-    refholder(const refholder& ov) : v(ov.v) {}
+    refholder(T& pv) noexcept : v(pv) {}
+    refholder(const refholder& ov) noexcept : v(ov.v) {}
+    refholder(refholder&& ov) noexcept : v(ov.v) {}
     refholder(T&&) = delete;
 
     ~refholder() = default;
 
     /* Assignment */
-    refholder<T>& operator = (const T& ov) { v = ov; return *this;}
-    refholder<T>& operator = (const refholder<T>& ov ) { v = ov.v; return *this; }
+    refholder<T>& operator = (const T& ov) { const_cast<T&>(v) = ov; return *this;}
+    refholder<T>& operator = (const refholder<T>& ov ) { const_cast<T&>(v) = const_cast<T&>(ov.v); return *this; }
+    refholder<T>& operator = (T&& ov) noexcept { const_cast<T&>(v) = std::move(ov); return *this; }
+    refholder<T>& operator = (refholder<T>&& ov) noexcept { const_cast<T&>(v) = std::move(const_cast<T&>(ov.v)); return *this; }
 
     /* Comparison */
     bool operator==(const T& ov) const {
@@ -259,12 +262,12 @@ public:
     operator T() {return v;}
 
     /* Pre increment/decrement operators */
-    refholder<T>& operator++() { ++ v; return *this; }
-    refholder<T>& operator--() { -- v; return *this; }
+    refholder<T>& operator++() noexcept { ++const_cast<T&>(v); return *this; }
+    refholder<T>& operator--() noexcept { --const_cast<T&>(v); return *this; }
 
     /* post increment/decrement */
-    refholder<T> operator++(int) { refholder<T> rv(*this); operator ++(); return rv; }
-    refholder<T> operator--(int) { refholder<T> rv(*this); operator --(); return rv; }
+    refholder<T> operator++(int) noexcept { refholder<T> rv(*this); operator ++(); return rv; }
+    refholder<T> operator--(int) noexcept { refholder<T> rv(*this); operator --(); return rv; }
 
     /* Compound assignments */
     OBFY_COMP_ASSIGNMENT_OPERATOR(+)
@@ -294,7 +297,7 @@ class refholder <const T> final
 public:
     /* Construction, destruction */
     refholder() = delete;
-    refholder(const T& pv) : v(pv) {}
+    refholder(const T& pv) noexcept : v(pv) {}
     refholder(T&&) = delete;
 
     ~refholder() = default;
@@ -312,10 +315,8 @@ private:
 #define OBFY_DEFINE_BINARY_OPERATOR(x) \
 template <class T> refholder<T> operator x (refholder<T>& ls, const T& rs) {refholder<T> rv = ls; ls x##= rs; return rv; } \
 template <class T> refholder<T> operator x (refholder<T>& ls, T& rs) {refholder<T> rv = ls; ls x##= rs; return rv; } \
-template <class T> refholder<T> operator x (refholder<T>& ls, T&& rs) {refholder<T> rv = ls; ls x##= rs; return rv; } \
-template <class T> refholder<T> operator x (refholder<T>& ls, const T&& rs) {refholder<T> rv = ls; ls x##= rs; return rv; } \
-template <class T> refholder<T> operator x (refholder<T>& ls, const refholder<T>&& rs) {refholder<T> rv = ls; ls x##= rs; return rv; } \
-template <class T> refholder<T> operator x (refholder<T>& ls, refholder<T>&& rs) {refholder<T> rv = ls; ls x##= rs; return rv; } \
+template <class T> refholder<T> operator x (refholder<T>& ls, T&& rs) {refholder<T> rv = ls; ls x##= std::move(rs); return rv; } \
+template <class T> refholder<T> operator x (refholder<T>& ls, refholder<T>&& rs) {refholder<T> rv = ls; ls x##= std::move(rs); return rv; } \
 template <class T> refholder<T> operator x (refholder<T>& ls, refholder<T>& rs) {refholder<T> rv = ls; ls x##= rs; return rv; } \
 template <class T> refholder<T> operator x (refholder<T>& ls, const refholder<T>& rs) {refholder<T> rv = ls; ls x##= rs; return rv; }
 
@@ -758,8 +759,8 @@ public:
     ~basic_extra() = default;
     basic_extra(const basic_extra&) = delete;
     basic_extra& operator = (const basic_extra&) = delete;
-    basic_extra(const basic_extra&&) = delete;
-    basic_extra& operator = (const basic_extra&&) = delete;
+    basic_extra(basic_extra&&) = delete;
+    basic_extra& operator = (basic_extra&&) = delete;
 };
 
 template <class T>

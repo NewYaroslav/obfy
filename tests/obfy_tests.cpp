@@ -6,6 +6,7 @@
 #include <obfy/obfy.hpp>
 #include <stdint.h>
 #include <limits>
+#include <memory>
 
 template<template<class> class Extra, typename T>
 static void roundtrip(T value)
@@ -139,6 +140,27 @@ BOOST_AUTO_TEST_OBFY_CASE(float_variable_wrapper)
     OBFY_V(d) = 2.0;
     OBFY_V(d) *= 1.5;
     BOOST_CHECK_CLOSE(d, 3.0, 0.001);
+}
+
+BOOST_AUTO_TEST_OBFY_CASE(refholder_move_only)
+{
+    std::unique_ptr<int> src(new int(42));
+    std::unique_ptr<int> dest;
+
+    obfy::refholder<std::unique_ptr<int>> dest_holder(dest);
+    dest_holder = std::move(src);
+    BOOST_CHECK(!src);
+    BOOST_CHECK(dest && *dest == 42);
+
+    std::unique_ptr<int> src2(new int(5));
+    obfy::refholder<std::unique_ptr<int>> src_holder(src2);
+    dest_holder = std::move(src_holder);
+    BOOST_CHECK(!src2);
+    BOOST_CHECK(dest && *dest == 5);
+
+    obfy::refholder<std::unique_ptr<int>> moved_holder(std::move(dest_holder));
+    moved_holder = std::unique_ptr<int>(new int(7));
+    BOOST_CHECK(dest && *dest == 7);
 }
 
 BOOST_AUTO_TEST_OBFY_CASE(extra_operations_roundtrip)
