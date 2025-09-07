@@ -1,5 +1,5 @@
-#ifndef OBFY_STR_HPP
-#define OBFY_STR_HPP
+#ifndef __OBFY_STR_HPP__
+#define __OBFY_STR_HPP__
 
 #include <cstddef>
 #include <cstdint>
@@ -59,4 +59,4 @@ namespace detail {
 
 #define OBFY_STR(s) ([](){ static auto _obfy_str = OBFY_DEF_STR(s); return _obfy_str.decrypt(); }())
 
-#endif // OBFY_STR_HPP
+#endif // __OBFY_STR_HPP__
