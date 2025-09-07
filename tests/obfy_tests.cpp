@@ -103,6 +103,12 @@ BOOST_AUTO_TEST_OBFY_CASE(bit_cast_macro)
     BOOST_CHECK_EQUAL(OBFY_BIT_CAST(uint64_t, rd), b64);
 }
 
+BOOST_AUTO_TEST_OBFY_CASE(string_literal)
+{
+    BOOST_CHECK_EQUAL(std::string(OBFY_STR("test")), "test");
+    BOOST_CHECK_EQUAL(std::string(OBFY_STR("")), "");
+}
+
 BOOST_AUTO_TEST_OBFY_CASE(float_variable_wrapper)
 {
     float f = 0.0f;

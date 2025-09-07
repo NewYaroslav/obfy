@@ -369,5 +369,6 @@ int main()
     int64_t bigNumber;
     OBFY_V(bigNumber) = OBFY_N(1537232811123);
     std::cout << "1537232811123:" << bigNumber << std::endl;
+    std::cout << OBFY_STR("hello obfy") << std::endl;
 }
 #endif
