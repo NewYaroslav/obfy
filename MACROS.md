@@ -9,7 +9,9 @@ This document summarizes the public macros provided by **obfy** and shows short 
 
 ```cpp
 const char* msg = OBFY_STR("secret");
+const wchar_t* wmsg = OBFY_WSTR(L"wide");
 auto tmp = OBFY_STR_ONCE("one-shot");
+auto wtmp = OBFY_WSTR_ONCE(L"w-one-shot");
 ```
 
 ## Function call obfuscation
@@ -34,6 +36,8 @@ OBFY_CALL(do_work);
 OBFY_V(x) = 42;
 int n = OBFY_N(10);
 double pi = OBFY_RATIO_D(314, 100);
+float f = OBFY_RATIO_F(22, 7);
+auto bits = OBFY_BIT_CAST<unsigned>(0.5f);
 ```
 
 ## Control-flow obfuscation
@@ -49,6 +53,15 @@ double pi = OBFY_RATIO_D(314, 100);
 OBFY_BEGIN_CODE
     OBFY_IF(check())
         OBFY_RETURN(42);
+    OBFY_ELSE
+        OBFY_FOR(int i = 0; i < 3; ++i)
+            OBFY_CONTINUE;
+        OBFY_ENDFOR
     OBFY_ENDIF
+
+    OBFY_CASE(n)
+        OBFY_WHEN(1) OBFY_OR(2) OBFY_DO { OBFY_BREAK; } OBFY_DONE
+        OBFY_DEFAULT OBFY_DO { OBFY_BREAK; } OBFY_DONE
+    OBFY_ENDCASE
 OBFY_END_CODE
 ```
