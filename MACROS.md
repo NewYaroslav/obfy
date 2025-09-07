@@ -14,6 +14,18 @@ auto tmp = OBFY_STR_ONCE("one-shot");
 auto wtmp = OBFY_WSTR_ONCE(L"w-one-shot");
 ```
 
+## Byte block obfuscation
+
+- `OBFY_BYTES`
+- `OBFY_BYTES_ONCE`
+
+Requires including `obfy_bytes.hpp`.
+
+```cpp
+const unsigned char* key = OBFY_BYTES("\x01\x02\x03\x04");
+auto tmp_block = OBFY_BYTES_ONCE("\xAA\xBB");
+```
+
 ## Function call obfuscation
 
 Requires including `obfy_call.hpp`. Define `OBFY_ENABLE_FSM_CALL` to enable the state-machine wrapper.
