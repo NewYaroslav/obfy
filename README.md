@@ -1260,11 +1260,9 @@ Source (this fork): https://github.com/NewYaroslav/obfy
 
 History has shown us, that if a piece of software is crackable, it will be cracked. And it just depends on the dedication, time spent, and effort invested by the software cracker when that piece of a software is to be proven crackable. There is no swiss army knife when it comes about protecting your software against malicious interference, because from the moment it has left your build server and it was dowloaded, the software is out of your hands, and entered an uncontrollable environment. The only sensible act you can do to protect your intellectual property is to make it as hard to crack as possible. This little framework provides a few means in order to achieve this goal, and by making it open source, freely available and modifiable to the developer community we can just hope this will give it an advantage by allowing everyone to tailor it in order to suit their needs best.
 
-# Appendix
+# The license generating algorithm
 
-## The license generating algorithm
-
-As promised, here is the naive license generating algorithm. Any further improvements to it are more than welcome.
+Here is the naive license generating algorithm. Any further improvements to it are more than welcome.
 
 ```cpp
 static const char letters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -1304,7 +1302,7 @@ std::string generate_license(const char* user) {
 
 [Stackoverflow] - http://stackoverflow.com/questions/12387239/reference-member-variables-as-class-members
 
-## Related Projects
+# Related Projects
 
 - [ADVobfuscator](https://github.com/andrivet/ADVobfuscator) – original project this fork builds upon.
 - [aes-cpp](https://github.com/NewYaroslav/aes-cpp) – minimal AES implementation in C++.
