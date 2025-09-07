@@ -37,8 +37,8 @@
 
 namespace obfy
 {
-
 // Compile time random number generator from https://github.com/andrivet/ADVobfuscator
+// Modified to allow overriding the time-based seed via `OBFY_SEED` for reproducible builds.
 /*
  * Written by Sebastien Andrivet
  * Copyright (c) 2010-2015 - Sebastien Andrivet All rights reserved.
@@ -48,14 +48,27 @@ namespace obfy
  * 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-constexpr char time[] = __TIME__;
-constexpr int DigitToInt(char c) { return c - '0'; }
-const int seed = DigitToInt(time[7]) +
-                 DigitToInt(time[6]) * 10 +
-                 DigitToInt(time[4]) * 60 +
-                 DigitToInt(time[3]) * 600 +
-                 DigitToInt(time[1]) * 3600 +
-                 DigitToInt(time[0]) * 36000;
+
+namespace detail {
+    constexpr int DigitToInt(char c) { return c - '0'; }
+
+    template <size_t N>
+    constexpr int parse_time(const char (&t)[N]) {
+        return (DigitToInt(t[0]) * 10 + DigitToInt(t[1])) * 3600 +
+               (DigitToInt(t[3]) * 10 + DigitToInt(t[4])) * 60 +
+               (DigitToInt(t[6]) * 10 + DigitToInt(t[7]));
+    }
+
+    static_assert(parse_time("12:34:56") == 45296, "time parser failed");
+
+    constexpr int time_seed() { return parse_time(__TIME__); }
+}
+
+#ifndef OBFY_SEED
+#  define OBFY_SEED (::obfy::detail::time_seed())
+#endif
+
+static constexpr unsigned seed = static_cast<unsigned>(OBFY_SEED);
 
 template<int N>
 struct MetaRandomGenerator final

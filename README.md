@@ -164,6 +164,20 @@ The following functionalities are provided by the framework:
  - generating extra code to achieve complex code making it harder to understand
  - offering a randomization of constant values in order to hide the information
 
+### Deterministic builds
+
+By default obfy seeds its compile-time random generator from `__TIME__`, producing different constants on each build. Define `OBFY_SEED` with a fixed value to make builds reproducible:
+
+```bash
+g++ ... -DOBFY_SEED=0xDEADBEEF
+```
+
+Or in CMake:
+
+```cmake
+add_compile_definitions(OBFY_SEED=123456)
+```
+
 ### Debugging with the framework
 
 Like every developer who has been there, we know that debugging complex and highly templated c++ code sometimes can be a nightmare. In order to avoid this nightmare while using the framework we decided to implement a debugging mode.
