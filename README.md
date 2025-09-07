@@ -24,12 +24,6 @@ cmake -S . -B build
 cmake --build build
 ```
 
-## Related Projects
-
-- [ADVobfuscator](https://github.com/andrivet/ADVobfuscator)
-- [aes-cpp](https://github.com/NewYaroslav/aes-cpp)
-- [hmac-cpp](https://github.com/NewYaroslav/hmac-cpp)
-
 ## Obfuscation vs Protection
 
 OBFY offers lightweight compile-time obfuscation for strings and numeric constants. It complicates casual static inspection but is **not** a full protection suite.
@@ -1305,4 +1299,9 @@ std::string generate_license(const char* user) {
 
 [Stackoverflow] - http://stackoverflow.com/questions/12387239/reference-member-variables-as-class-members
 
+## Related Projects
+
+- [ADVobfuscator](https://github.com/andrivet/ADVobfuscator)
+- [aes-cpp](https://github.com/NewYaroslav/aes-cpp)
+- [hmac-cpp](https://github.com/NewYaroslav/hmac-cpp)
 
