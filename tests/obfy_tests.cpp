@@ -71,6 +71,14 @@ BOOST_AUTO_TEST_OBFY_CASE(return_test)
     BOOST_CHECK_EQUAL(x.x, 42);
 }
 
+BOOST_AUTO_TEST_OBFY_CASE(runtime_tweak_test)
+{
+    ::obfy::detail::runtime_tweak_counter() = 0;
+    auto value = OBFY_N(42);
+    BOOST_CHECK_EQUAL(value, 42);
+    BOOST_CHECK(::obfy::detail::runtime_tweak_counter() > 0);
+}
+
 BOOST_AUTO_TEST_OBFY_CASE(bignumber)
 {
     int64_t bigNumber;
