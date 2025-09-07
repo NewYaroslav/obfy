@@ -30,6 +30,7 @@
 #include <vector>
 #include <type_traits>
 #include <utility>
+#include <stdint.h>
 
 #ifndef OBFY_MAX_BOGUS_IMPLEMENTATIONS
 #define OBFY_MAX_BOGUS_IMPLEMENTATIONS 3
@@ -62,10 +63,37 @@ namespace detail {
     static_assert(parse_time("12:34:56") == 45296, "time parser failed");
 
     constexpr int time_seed() { return parse_time(__TIME__); }
+
+    constexpr uint64_t mix64(uint64_t x) {
+        x += 0x9e3779b97f4a7c15ull;
+        x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ull;
+        x = (x ^ (x >> 27)) * 0x94d049bb133111ebull;
+        return x ^ (x >> 31);
+    }
+
+    constexpr uint64_t fnv1a64(const char* s, uint64_t h = 1469598103934665603ull) {
+        return *s ? fnv1a64(s + 1, (h ^ static_cast<unsigned char>(*s)) * 1099511628211ull) : h;
+    }
+
+#ifndef OBFY_FILE_FOR_HASH
+#  define OBFY_FILE_FOR_HASH __FILE__
+#endif
+
+    constexpr uint64_t OBFY_TU_SALT_CT = mix64(fnv1a64(OBFY_FILE_FOR_HASH));
 }
 
 #ifndef OBFY_SEED
 #  define OBFY_SEED (::obfy::detail::time_seed())
+#endif
+
+#ifndef OBFY_TU_SALT
+// Translation unit specific salt for key diversification
+#  define OBFY_TU_SALT (::obfy::detail::OBFY_TU_SALT_CT)
+#endif
+
+#ifndef OBFY_LOCAL_KEY
+// Local key combining global seed, TU salt and location macros
+#  define OBFY_LOCAL_KEY() (::obfy::detail::mix64(static_cast<uint64_t>(OBFY_SEED) ^ static_cast<uint64_t>(OBFY_TU_SALT) ^ static_cast<uint64_t>(__LINE__) ^ static_cast<uint64_t>(__COUNTER__)))
 #endif
 
 static constexpr unsigned seed = static_cast<unsigned>(OBFY_SEED);
@@ -804,7 +832,7 @@ OBFY_TYPE(unsigned long long int)
 
 #else
 #define OBFY_JOIN(a,b) a##b
-#define OBFY_N(a) (obfy::Num<decltype(a), obfy::MetaRandom<__COUNTER__, 4096>::value ^ a>().get() ^ obfy::MetaRandom<__COUNTER__ - 1, 4096>::value)
+#define OBFY_N(a) ([](){ constexpr uint64_t _obfy_k64 = OBFY_LOCAL_KEY(); using _obfy_T = decltype(a); using _obfy_U = typename std::make_unsigned<_obfy_T>::type; return static_cast<_obfy_T>(obfy::Num<_obfy_U, static_cast<_obfy_U>(_obfy_k64 ^ static_cast<uint64_t>(a))>().get() ^ static_cast<_obfy_U>(_obfy_k64)); }())
 #define OBFY_DEFINE_EXTRA(N,implementer) template <typename T> struct extra_chooser<T,N> { using type = implementer<T>; }
 OBFY_DEFINE_EXTRA(0, extra_xor);
 OBFY_DEFINE_EXTRA(1, extra_substraction);
