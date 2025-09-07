@@ -14,6 +14,8 @@ auto tmp = OBFY_STR_ONCE("one-shot");
 auto wtmp = OBFY_WSTR_ONCE(L"w-one-shot");
 ```
 
+`*_ONCE` macros return a temporary that zeroes its storage on destruction. Pointers from `c_str()` remain valid only within the full expression; copy the string if a longer lifetime is required.
+
 ## Byte block obfuscation
 
 - `OBFY_BYTES`
@@ -25,6 +27,8 @@ Requires including `obfy_bytes.hpp`.
 const unsigned char* key = OBFY_BYTES("\x01\x02\x03\x04");
 auto tmp_block = OBFY_BYTES_ONCE("\xAA\xBB");
 ```
+
+`OBFY_BYTES_ONCE` behaves similarly, returning a temporary block that clears its contents when destroyed.
 
 ## Function call obfuscation
 

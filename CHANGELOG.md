@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+- document lifetime of `*_ONCE` macros
+- remove redundant `OBFY_TU_SALT` defaults
+- add character-width check for obfuscated strings
+- drop `constexpr` from `obf_string_impl` constructor
+
 ## [1.0.0] - 2025-09-07
 - Initial release of the forked project.
 - Added obfuscated function call macros `OBFY_CALL` and `OBFY_CALL_RET`.
