@@ -1199,7 +1199,8 @@ bool check_license1(const char* user, const char* users_license) {
         OBFY_V(i) %= l;
         int current = 0;
         OBFY_WHILE(OBFY_V(i) < OBFY_V(l) )
-            OBFY_V(current) += user[OBFY_V(i)++];
+            OBFY_V(current) += user[OBFY_V(i)];
+            OBFY_V(i)++;
         OBFY_ENDWHILE
         OBFY_V(current) += OBFY_V(add);
         ++OBFY_V(add);
