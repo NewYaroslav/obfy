@@ -181,6 +181,24 @@ Or in CMake:
 add_compile_definitions(OBFY_SEED=123456)
 ```
 
+### Translation-unit salt
+
+Each translation unit gets its own salt by hashing the file name. Override the
+label used for hashing with `OBFY_FILE_FOR_HASH` to avoid leaking full paths or
+to tag files in unity builds:
+
+```bash
+g++ ... -DOBFY_FILE_FOR_HASH="\"module-a\""
+```
+
+```cmake
+add_compile_definitions(OBFY_FILE_FOR_HASH="\"module-a\"")
+```
+
+You may also define `OBFY_TU_SALT` directly to supply a custom salt. The
+resulting value is mixed with `OBFY_SEED`, `__LINE__` and `__COUNTER__` by
+`OBFY_LOCAL_KEY()` to generate a unique key for each literal.
+
 ### Debugging with the framework
 
 Like every developer who has been there, we know that debugging complex and highly templated c++ code sometimes can be a nightmare. In order to avoid this nightmare while using the framework we decided to implement a debugging mode.
