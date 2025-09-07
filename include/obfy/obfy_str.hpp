@@ -54,8 +54,8 @@ namespace detail {
         static_cast<unsigned char>(::obfy::MetaRandom<__COUNTER__, 256>::value), \
         static_cast<unsigned char>(::obfy::MetaRandom<__COUNTER__, 256>::value), \
         static_cast<unsigned char>(::obfy::MetaRandom<__COUNTER__, 256>::value), \
-        ::obfy::detail::make_index_sequence<sizeof(s) - 1>>(s)
+        ::obfy::detail::make_index_sequence<sizeof(s) - 1>>
 
-#define OBFY_STR(s) ([](){ static auto _obfy_str = OBFY_DEF_STR(s); return _obfy_str.decrypt(); }())
+#define OBFY_STR(s) ([](){ static OBFY_DEF_STR(s) _obfy_str{ s }; return _obfy_str.decrypt(); }())
 
 #endif // __OBFY_STR_HPP__
