@@ -8,21 +8,23 @@ of protection.
 
 [![Build Status](https://github.com/NewYaroslav/obfy/actions/workflows/build.yml/badge.svg)](https://github.com/NewYaroslav/obfy/actions/workflows/build.yml)
 
-**This version of the library differs from the original in that it has improved compatibility with other libraries by changing macro names. The original library caused name conflicts when used together with the Eigen library.**
+**This fork differs from the original ADVobfuscator by:**
+- **renaming/isolating macros** to avoid collisions (e.g., with Eigen);
+- **deterministic builds support** via `OBFY_SEED`;
+- optional **runtime tweak** (`OBFY_DISABLE_RUNTIME_TWEAK`);
+- **TU-salt controls**: `OBFY_FILE_FOR_HASH`, `OBFY_TU_SALT`;
+- **build system cleanup** (CMake options; tests/examples toggles).
 
 ## Quick Start
 
-Add the library to your CMake project and build it with:
+Add the library to your CMake project:
 
 ```cmake
 add_subdirectory(obfy)
 target_link_libraries(your-target PRIVATE obfy)
 ```
 
-```bash
-cmake -S . -B build
-cmake --build build
-```
+> To build this repo (examples + tests) see **Building** below.
 
 ## Obfuscation vs Protection
 
@@ -30,27 +32,33 @@ OBFY offers lightweight compile-time obfuscation for strings and numeric constan
 
 | Approach | Protects | Against | Cost |
 | --- | --- | --- | --- |
-| Lightweight obfuscation (`OBFY_STR`, wrappers, `OBFY_CALL`) | Encodes literals at compile time, decodes on first use, hides call targets | Simple static searches, single-key XOR scans | Low — header-only, minimal runtime overhead |
+| Lightweight obfuscation (`OBFY_STR`, value/call wrappers) | Encodes literals at compile time, decodes on first use, hides call targets | Simple static searches, single-key XOR scans | Low — header-only, minimal runtime overhead |
 | Full protection (packers, virtualization, anti-tamper) | Entire binary with anti-debug and integrity checks | Skilled reverse engineers, automated tooling | High — external tools, performance and licensing cost |
 
 # Building
 
-This project uses CMake. To build the example program and unit tests run:
+This project uses CMake. To build examples and unit tests run:
 
 ```
 cmake -S . -B build
 cmake --build build
 ```
 
-The example program and unit tests are built by default. Disable them with
-`-DOBFY_BUILD_EXAMPLE=OFF` or `-DOBFY_BUILD_TESTS=OFF`.
+Options (defaults in **bold**):
+- `-DOBFY_BUILD_EXAMPLE=**ON**|OFF`
+- `-DOBFY_BUILD_TESTS=**ON**|OFF`
 
-The resulting example executable can be found at `build/example`. To install the
+The example executable is placed under `build/example/`. To install the
 headers system-wide, use:
 
 ```
 cmake --install build --prefix /usr/local
 ```
+
+### Known limitations
+- Macros may evaluate arguments more than once (avoid side effects).
+- `OBFY_N` works only with integral/enum constant expressions.
+- Debuggers step easier with `OBFY_DEBUG`, but code shape differs from release.
 
 # Attacking the licensing problems with C++
 
@@ -178,7 +186,7 @@ The following functionalities are provided by the framework:
 
 ### Deterministic builds
 
-By default obfy seeds its compile-time random generator from `__TIME__`, producing different constants on each build. Define `OBFY_SEED` with a fixed value to make builds reproducible:
+By default obfy seeds its compile-time random generator from `__TIME__`, producing different constants on each build. Define `OBFY_SEED` with a constant expression (e.g. literal or constexpr) to make builds reproducible:
 
 ```bash
 g++ ... -DOBFY_SEED=0xDEADBEEF
@@ -196,23 +204,11 @@ Or in CMake:
 add_compile_definitions(OBFY_SEED=123456)
 ```
 
-At runtime obfy applies an extra tweak by mixing the current process ID,
-the address of a stack variable and the current time through `mix64`.
-This per-run value is combined with `OBFY_SEED`, making static analysis harder.
-Define `OBFY_DISABLE_RUNTIME_TWEAK` to turn it off:
+At runtime obfy mixes the fixed seed with a per-run value (PID, stack address, time) via `mix64`.
 
-```bash
-g++ ...                        # runtime tweak enabled
-g++ ... -DOBFY_DISABLE_RUNTIME_TWEAK  # disabled
-```
-
-Or in CMake:
-
-```cmake
-add_compile_definitions(OBFY_DISABLE_RUNTIME_TWEAK)
-```
-
-Disabling the tweak makes keys deterministic and simplifies static analysis.
+#### Seed source
+By default, the compile-time seed derives from `__TIME__` ("HH:MM:SS" → seconds since 00:00).  
+You can override it with `OBFY_SEED`. Example parser is constexpr and validated by `static_assert`.
 
 ### Translation-unit salt
 
@@ -234,9 +230,9 @@ resulting value is mixed with `OBFY_SEED`, `__LINE__` and `__COUNTER__` by
 
 ### Debugging with the framework
 
-Like every developer who has been there, we know that debugging complex and highly templated c++ code sometimes can be a nightmare. In order to avoid this nightmare while using the framework we decided to implement a debugging mode.
+Debugging complex and highly templated C++ code can be challenging. The framework provides an `OBFY_DEBUG` mode to ease inspection.
 
-In order to activate the debugging mode of the framework define the `OBFY_DEBUG` identifier before including the obfuscation header file. Please see at the specific control structures how the debugging mode alters the behaviour of the macro.
+To activate `OBFY_DEBUG` mode define the `OBFY_DEBUG` identifier before including the obfuscation header file. Please see at the specific control structures how `OBFY_DEBUG` mode alters the behaviour of the macro.
 
 #### OBFY_DEBUG
 
@@ -256,11 +252,14 @@ int add(int a, int b) {
 
 ### Using the framework
 
-The basic usage of the framework boils down to including the header file providing the obfuscating functionality
+Basic usage:
 
 ```cpp
-#include "obfy/obfy.hpp"`
+#include "obfy/obfy.hpp"
 ```
+
+> ⚠️ **Side effects.** Some macros evaluate arguments multiple times (e.g. `OBFY_RETURN(x)`),  
+avoid expressions with side effects (`x++`, function calls with mutations).
 
 then using the macro pair `OBFY_BEGIN_CODE` and `OBFY_END_CODE` as delimiters of the code sequences that will be using obfuscated expressions.
 
@@ -284,7 +283,7 @@ In order to support for "return"-ing a value from the current obfuscated block w
 
 #### OBFY_END_CODE_VOID
 
-Use `OBFY_END_CODE_VOID` instead of `OBFY_END_CODE` when the enclosing function has a `void` return type. It discards internal return values and exits the obfuscated block without yielding a value.
+Use `OBFY_END_CODE_VOID` for functions with `void` return type; using `OBFY_END_CODE` there is ill-formed. It discards internal return values and exits the obfuscated block without yielding a value.
 
 ```cpp
 void log_message() {
@@ -303,10 +302,10 @@ The implementation of the wrappers uses the link time random number generator pr
 And here is an example for using the value and variable wrappers:
 
 ```cpp
-int a, b = OBFY_N(6);
+int a = 0, b = OBFY_N(6);
 OBFY_V(a) = OBFY_N(1);
-float f;
-OBFY_V(f) = 3.14f;
+float f = 0.f;
+OBFY_V(f) = 3.14f; // for literals prefer OBFY_RATIO_F or BIT_CAST
 ```
 
 After executing the statement above, the value of `a` will be 1 and `f` will be `3.14f`.
@@ -393,7 +392,7 @@ However, please note the several `volatile` variables ... which are required in 
 
 ##### Behind the scenes of the implementation of the variable wrapping
 
-In case of not building the code in debugging mode, the macro `OBFY_V` expands to the following C++ nightmare:
+When `OBFY_DEBUG` mode is off, the macro `OBFY_V` expands to the following C++ nightmare:
 
 ```cpp
 #define OBFY_MAX_BOGUS_IMPLEMENTATIONS 6
@@ -590,7 +589,7 @@ Since the evaluation of the `expression` is bound to the execution of a hidden (
 
 is not valid, and will yield a compiler error. This is partially intentional, since it gives that extra layer of obfuscation required to hide the operations done on a variable in a nameless lambda somewhere deep in the code.
 
-In case the debugging mode is active, the `OBFY_IF`-`OBFY_ELSE`-`OBFY_ENDIF` macros are defined to expand to the following statements:
+With `OBFY_DEBUG` mode active, the `OBFY_IF`-`OBFY_ELSE`-`OBFY_ENDIF` macros are defined to expand to the following statements:
 
 ```cpp
 #define OBFY_IF(x)  if(x) {
@@ -772,7 +771,7 @@ OBFY_ENDWHILE
 
 Unfortunately the `OBFY_WHILE` loop also has the same restrictions as the `OBFY_IF`: you cannot declare a variable in its condition.
 
-In case the compilation is done in debugging mode, the `OBFY_WHILE` evaluates to:
+With `OBFY_DEBUG` mode active, the `OBFY_WHILE` evaluates to:
 
 ```cpp
 #define OBFY_WHILE(x) while(x) {
@@ -989,7 +988,7 @@ Here is the `OBFY_CASE` statement:
 
 The functionality is very similar to the well known `switch`-`case` construct, the main differences are:
 
-1. It is possible to use non-numeric, non-constant values (variables and strings) for the `OBFY_WHEN` due to the fact that all of the `OBFY_CASE` statement is wrapped up in a templated, lambdaized well hidden from the outside world, construct. Be careful with this extra feature when using the debugging mode of the library because the `OBFY_CASE` macro expands to the standard `case` keyword.
+1. It is possible to use non-numeric, non-constant values (variables and strings) for the `OBFY_WHEN` due to the fact that all of the `OBFY_CASE` statement is wrapped up in a templated, lambdaized well hidden from the outside world, construct. Be careful with this extra feature when using `OBFY_DEBUG` mode because the `OBFY_CASE` macro expands to the standard `case` keyword.
 2. It is possible to have multiple conditions for a `OBFY_WHEN` label joined together with `OBFY_OR`.
 
 The fall through behaviour of the `switch` construct which is familiar to c++ programmers was kept, so there is a need to put in a `OBFY_BREAK` statement if you wish for the operation to stop after entering a branch.
@@ -1017,7 +1016,7 @@ OBFY_CASE (something)
     OBFY_DONE
 OBFY_ENDCASE
 ```
-In case the framework is used in debugging mode the macros expand to the following statements:
+With `OBFY_DEBUG` mode enabled the macros expand to the following statements:
 
 ```cpp
 #define OBFY_CASE(a) switch (a) {
@@ -1220,7 +1219,11 @@ Those who dislike the usage of CAPITAL letters in code may find the framework to
 
 This brings us back to the swampy area of C++ and macros. There are several voices whispering loudly that macros have nothing to do in a C++ code, and there are several voices echoing back that macros if wisely used can help C++ code as well as good old style C. I personally have nothing against the wise use of macros, indeed they came to be very helpful while developing this framework.
 
-Numeric value wrappers also work with floating point variables. `OBFY_V` can wrap `float` and `double` values by obfuscating their underlying byte representation. The `OBFY_N` macro remains limited to integral and enumeration constants.
+Numeric value wrappers also work with floating point variables. `OBFY_V` can wrap `float` and `double` values by obfuscating their underlying byte representation.
+`OBFY_N` is limited to integral and enum **constant expressions**.  
+For FP constants use:
+- `OBFY_RATIO_D(num, den)` / `OBFY_RATIO_F(num, den)` (assembled at runtime), or
+- exact bit pattern via `OBFY_BIT_CAST<uint64_t,double>(bits)`.
 
 String literals can be protected with `OBFY_STR`. The characters are encoded at compile time using a blend of XOR and arithmetic transformations and decoded on demand at runtime.
 
@@ -1241,15 +1244,15 @@ For floating point constants you can assemble them from integers with `OBFY_RATI
 
 # Some requirements
 
-The code is written also with "older" compilers in mind, so not all the latest and greatest features of C++14 and 17 are being included. CLang version 3.4.1 happily compiles the source code, so does g++ 4.8.2. Visual Studio 2015 is also compiling the code.
+The code is written also with "older" compilers in mind, so not all the latest and greatest features of C++14 and 17 are being included. Tested with: Clang ≥ 3.4, GCC ≥ 4.8, MSVC ≥ 19.0 (VS 2015).  
+Note: specific minimum versions **may change**; check CI status badge for current matrix.
 
 Unit testing is done using the Boost Unit test framework. The build system for the unit tests is CMake and there is support for code coverage (the last two were tested only under Linux).
 
 # License and getting the framework
 
-The library is a header only library, released in the public domain under the MIT license.
-
-You can get it from https://github.com/fritzone/obfy 
+The library is header-only under the **MIT** license.  
+Source (this fork): https://github.com/NewYaroslav/obfy
 
 # Conclusion
 
@@ -1301,7 +1304,7 @@ std::string generate_license(const char* user) {
 
 ## Related Projects
 
-- [ADVobfuscator](https://github.com/andrivet/ADVobfuscator)
-- [aes-cpp](https://github.com/NewYaroslav/aes-cpp)
-- [hmac-cpp](https://github.com/NewYaroslav/hmac-cpp)
+- [ADVobfuscator](https://github.com/andrivet/ADVobfuscator) – original project this fork builds upon.
+- [aes-cpp](https://github.com/NewYaroslav/aes-cpp) – minimal AES implementation in C++.
+- [hmac-cpp](https://github.com/NewYaroslav/hmac-cpp) – HMAC routines for message authentication.
 
