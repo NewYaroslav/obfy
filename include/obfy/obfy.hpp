@@ -31,6 +31,12 @@
 #include <type_traits>
 #include <utility>
 #include <stdint.h>
+#include <ctime>
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 #ifndef OBFY_MAX_BOGUS_IMPLEMENTATIONS
 #define OBFY_MAX_BOGUS_IMPLEMENTATIONS 3
@@ -91,6 +97,35 @@ namespace detail {
     constexpr uint64_t mix64(uint64_t x) {
         return mix64_step4(mix64_step3(mix64_step2(mix64_step1(x))));
     }
+#endif
+
+#ifndef OBFY_DISABLE_RUNTIME_TWEAK
+    inline uint64_t runtime_tweak() {
+        int _obfy_dummy = 0;
+#if defined(_WIN32)
+        uint64_t pid = static_cast<uint64_t>(GetCurrentProcessId());
+#else
+        uint64_t pid = static_cast<uint64_t>(getpid());
+#endif
+        uint64_t addr = reinterpret_cast<uint64_t>(&_obfy_dummy);
+        uint64_t t = static_cast<uint64_t>(std::time(nullptr));
+        return mix64(pid ^ addr ^ t);
+    }
+#if defined(_MSC_VER)
+    static __declspec(noinline) uint64_t runtime_tweak_seed() {
+#else
+    static __attribute__((noinline)) uint64_t runtime_tweak_seed() {
+#endif
+        static uint64_t seed = runtime_tweak();
+        return seed;
+    }
+#else
+    inline uint64_t runtime_tweak() { return 0; }
+#if defined(_MSC_VER)
+    static __declspec(noinline) uint64_t runtime_tweak_seed() { return 0; }
+#else
+    static __attribute__((noinline)) uint64_t runtime_tweak_seed() { return 0; }
+#endif
 #endif
 
     constexpr uint64_t fnv1a64(const char* s, uint64_t h = 1469598103934665603ull) {
@@ -854,7 +889,11 @@ OBFY_TYPE(unsigned long long int)
 
 #else
 #define OBFY_JOIN(a,b) a##b
+#ifndef OBFY_DISABLE_RUNTIME_TWEAK
+#define OBFY_N(a) ([](){ constexpr uint64_t _obfy_k64 = OBFY_LOCAL_KEY(); volatile uint64_t _obfy_rt = ::obfy::detail::runtime_tweak_seed(); uint64_t _obfy_mix = _obfy_k64 ^ _obfy_rt; using _obfy_T = decltype(a); using _obfy_U = typename std::make_unsigned<_obfy_T>::type; return static_cast<_obfy_T>(obfy::Num<_obfy_U, static_cast<_obfy_U>(_obfy_k64 ^ static_cast<uint64_t>(a))>().get() ^ _obfy_mix ^ _obfy_rt); }())
+#else
 #define OBFY_N(a) ([](){ constexpr uint64_t _obfy_k64 = OBFY_LOCAL_KEY(); using _obfy_T = decltype(a); using _obfy_U = typename std::make_unsigned<_obfy_T>::type; return static_cast<_obfy_T>(obfy::Num<_obfy_U, static_cast<_obfy_U>(_obfy_k64 ^ static_cast<uint64_t>(a))>().get() ^ static_cast<_obfy_U>(_obfy_k64)); }())
+#endif
 #define OBFY_DEFINE_EXTRA(N,implementer) template <typename T> struct extra_chooser<T,N> { using type = implementer<T>; }
 OBFY_DEFINE_EXTRA(0, extra_xor);
 OBFY_DEFINE_EXTRA(1, extra_substraction);
