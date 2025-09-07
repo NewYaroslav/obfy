@@ -78,3 +78,28 @@ BOOST_AUTO_TEST_OBFY_CASE(bignumber)
     BOOST_CHECK_EQUAL(bigNumber,1537232811123);
 }
 
+BOOST_AUTO_TEST_OBFY_CASE(ratio_and_bitcast)
+{
+    double d = OBFY_RATIO_D(314, 100);
+    float f = OBFY_RATIO_F(157, 50);
+    BOOST_CHECK(d > 3.13 && d < 3.15);
+    BOOST_CHECK(f > 3.13f && f < 3.15f);
+
+    const uint32_t b32 = 0x4048F5C3u;
+    const uint64_t b64 = 0x40091EB851EB851FULL;
+    float rf = obfy::obfy_bit_cast<float>(b32);
+    double rd = obfy::obfy_bit_cast<double>(b64);
+    BOOST_CHECK_EQUAL(obfy::obfy_bit_cast<uint32_t>(rf), b32);
+    BOOST_CHECK_EQUAL(obfy::obfy_bit_cast<uint64_t>(rd), b64);
+}
+
+BOOST_AUTO_TEST_OBFY_CASE(bit_cast_macro)
+{
+    const uint32_t b32 = 0x4048F5C3u;
+    const uint64_t b64 = 0x40091EB851EB851FULL;
+    float rf = OBFY_BIT_CAST(float, b32);
+    double rd = OBFY_BIT_CAST(double, b64);
+    BOOST_CHECK_EQUAL(OBFY_BIT_CAST(uint32_t, rf), b32);
+    BOOST_CHECK_EQUAL(OBFY_BIT_CAST(uint64_t, rd), b64);
+}
+
