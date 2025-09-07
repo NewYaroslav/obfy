@@ -6,6 +6,8 @@
 #include <mutex>
 #include <string>
 
+#include <obfy/obfy.hpp>
+
 namespace obfy {
 namespace detail {
 
