@@ -1,0 +1,12 @@
+{
+  "name": "obfy",
+  "version-string": "1.0.0",
+  "description": "Compile-time string obfuscation library",
+  "homepage": "https://github.com/NewYaroslav/obfy",
+  "license": "MIT",
+  "dependencies": [
+    "vcpkg-cmake",
+    "vcpkg-cmake-config"
+  ]
+}
+

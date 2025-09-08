@@ -8,6 +8,8 @@ target_include_directories(obfy INTERFACE
 
 target_compile_features(obfy INTERFACE cxx_std_11)
 
+include(CMakePackageConfigHelpers)
+
 option(OBFY_BUILD_EXAMPLES "Build example programs" ON)
 option(OBFY_BUILD_TESTS "Build unit tests" ON)
 
@@ -47,5 +49,29 @@ if(OBFY_BUILD_TESTS)
     set_tests_properties(invalid_wstr_literal PROPERTIES WILL_FAIL TRUE)
 endif()
 
-install(TARGETS obfy)
+install(TARGETS obfy EXPORT obfyTargets)
 install(DIRECTORY include/ DESTINATION include)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/obfyConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/obfyConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/obfyConfig.cmake"
+    INSTALL_DESTINATION lib/cmake/obfy
+)
+
+install(EXPORT obfyTargets
+    FILE obfyTargets.cmake
+    NAMESPACE obfy::
+    DESTINATION lib/cmake/obfy
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/obfyConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/obfyConfigVersion.cmake"
+    DESTINATION lib/cmake/obfy
+)
