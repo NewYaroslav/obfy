@@ -263,8 +263,8 @@ BOOST_AUTO_TEST_OBFY_CASE(string_obfuscation_binary_check)
     const char* narrow = "super_secret_narrow_literal";
     const wchar_t* wide = L"super_secret_wide_literal";
 
-    const std::string src = std::string("/tmp/obfy_tmp_prog.cpp");
-    const std::string bin = std::string("/tmp/obfy_tmp_prog.bin");
+    const std::string src = root + "/obfy_tmp_prog.cpp";
+    const std::string bin = root + "/obfy_tmp_prog.bin";
 
     {
         std::ofstream ofs(src.c_str());
