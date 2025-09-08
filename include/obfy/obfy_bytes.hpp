@@ -2,7 +2,6 @@
 #define __OBFY_BYTES_HPP__
 
 #include <cstddef>
-#include <cstdint>
 #include <mutex>
 #include <array>
 
@@ -25,11 +24,11 @@ namespace detail {
             : data{ encode(static_cast<unsigned char>(s[I]), I)... } {}
 
         static constexpr std::size_t size_static() { return sizeof...(I); }
-        std::size_t size() const { return sizeof...(I); }
+        constexpr std::size_t size() const { return sizeof...(I); }
 
         // decrypt() decodes bytes once and keeps them in place.
         // For sensitive data prefer decrypt_once().
-        const unsigned char* decrypt() {
+        inline const unsigned char* decrypt() {
             std::call_once(once_, [&]{
                 for (std::size_t i = 0; i < sizeof...(I); ++i)
                     data[i] = decode(data[i], i);
@@ -38,14 +37,14 @@ namespace detail {
         }
         struct tmp_block {
             std::array<unsigned char, sizeof...(I)> bytes{};
-            ~tmp_block() {
+            inline ~tmp_block() {
                 volatile unsigned char* p = bytes.data();
                 for (std::size_t i = 0; i < bytes.size(); ++i) p[i] = 0;
             }
-            const unsigned char* data() const { return bytes.data(); }
-            std::size_t size() const { return bytes.size(); }
+            inline const unsigned char* data() const { return bytes.data(); }
+            inline std::size_t size() const { return bytes.size(); }
         };
-        tmp_block decrypt_once() const {
+        inline tmp_block decrypt_once() const {
             tmp_block tmp;
             for (std::size_t i = 0; i < sizeof...(I); ++i)
                 tmp.bytes[i] = decode(data[i], i);
