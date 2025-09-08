@@ -1,12 +1,12 @@
 # OBFY
 
+[![Build Status](https://github.com/NewYaroslav/obfy/actions/workflows/build.yml/badge.svg)](https://github.com/NewYaroslav/obfy/actions/workflows/build.yml)
+
 OBFY is a *header-only* C++ library for code obfuscation. It offers a set of macros and
 lightweight wrappers that expand straightforward constructs into randomized sequences of
 operations, increasing the effort required for reverse engineering and bypassing basic
 license checks. The library targets developers who need a minimal, dependency-free layer
 of protection.
-
-[![Build Status](https://github.com/NewYaroslav/obfy/actions/workflows/build.yml/badge.svg)](https://github.com/NewYaroslav/obfy/actions/workflows/build.yml)
 
 **This fork differs from the original ADVobfuscator by:**
 - **renaming/isolating macros** to avoid collisions (e.g., with Eigen);
@@ -74,6 +74,13 @@ xxd -p -l2 /dev/urandom
 od -An -tx2 -N2 /dev/urandom
 ```
 
+Per-file salts on the command line:
+
+```bash
+g++ -Iinclude -DOBFY_TU_SALT=0x1111 -c foo.cpp
+g++ -Iinclude -DOBFY_TU_SALT=0x2222 -c bar.cpp
+```
+
 ## Obfuscation vs Protection
 
 OBFY offers lightweight compile-time obfuscation for strings and numeric constants. It complicates casual static inspection but is **not** a full protection suite.
@@ -93,10 +100,10 @@ cmake --build build
 ```
 
 Options (defaults in **bold**):
-- `-DOBFY_BUILD_EXAMPLE=**ON**|OFF`
+- `-DOBFY_BUILD_EXAMPLES=**ON**|OFF`
 - `-DOBFY_BUILD_TESTS=**ON**|OFF`
 
-The example executable is placed under `build/example/`. To install the
+Example executables are placed under `build/`. To install the
 headers system-wide, use:
 
 ```
