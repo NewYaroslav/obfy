@@ -38,3 +38,18 @@ jobs:
         run: cmake --build build --config Release
       - name: Test
         run: ctest --test-dir build -C Release --output-on-failure
+  Tests-Linux-vcpkg:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install cmake and vcpkg
+        run: |
+          sudo apt-get update && sudo apt-get install -y cmake
+          git clone https://github.com/microsoft/vcpkg.git
+          ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
+      - name: Build and Run Tests with vcpkg
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+          VCPKG_OVERLAY_PORTS: ${{ github.workspace }}/vcpkg-port
+        run: |
+          CXX_STANDARD=17 ./scripts/run_tests.sh
