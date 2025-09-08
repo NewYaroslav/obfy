@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2025-09-08
+- Added vcpkg port.
+- Tweaked CMake configuration.
+- Updated README.
+
 ## [1.0.0] - 2025-09-07
 - Initial release of the forked project.
 - Added obfuscated function call macros `OBFY_CALL` and `OBFY_CALL_RET`.

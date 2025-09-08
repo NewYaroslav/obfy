@@ -119,6 +119,7 @@ cmake --install build --prefix /usr/local
 
 ### vcpkg
 
+Since 1.0.1, an overlay port is available under `vcpkg-port/`.
 Install via [vcpkg](https://github.com/microsoft/vcpkg) using the provided
 overlay port:
 
