@@ -26,7 +26,53 @@ add_subdirectory(obfy)
 target_link_libraries(your-target PRIVATE obfy)
 ```
 
+Or download it automatically:
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(obfy
+  GIT_REPOSITORY https://github.com/NewYaroslav/obfy.git
+  GIT_TAG main) # or a release tag
+FetchContent_MakeAvailable(obfy)
+target_link_libraries(your-target PRIVATE obfy)
+```
+
+Using [CPM.cmake](https://github.com/cpm-cmake/CPM.cmake):
+
+```cmake
+CPMAddPackage("gh:NewYaroslav/obfy#main")
+target_link_libraries(your-target PRIVATE obfy)
+```
+
 > To build this repo (examples + tests) see **Building** below.
+
+## Configuration Macros
+
+- `OBFY_SEED` – fixed seed for deterministic pseudo-random transformations.
+- `OBFY_TU_SALT` – per translation unit salt mixed into every key.
+- `OBFY_DISABLE_RUNTIME_TWEAK` – turn off runtime seed tweaks (enabled by default).
+- `OBFY_MAX_BOGUS_IMPLEMENTATIONS` – number of bogus branches when wrapping values.
+
+### Examples
+
+Reproducible build:
+
+```bash
+cmake -S . -B build -DOBFY_SEED=0xC0FFEE
+```
+
+Hardened build (per-TU salt + runtime tweak):
+
+```bash
+cmake -S . -B build -DOBFY_TU_SALT=$(xxd -p -l2 /dev/urandom) -UOBFY_DISABLE_RUNTIME_TWEAK
+```
+
+Generate a salt in shell:
+
+```bash
+xxd -p -l2 /dev/urandom
+od -An -tx2 -N2 /dev/urandom
+```
 
 ## Obfuscation vs Protection
 
