@@ -102,6 +102,23 @@ BOOST_AUTO_TEST_OBFY_CASE(bignumber)
     BOOST_CHECK_EQUAL(bigNumber,1537232811123);
 }
 
+BOOST_AUTO_TEST_OBFY_CASE(obfy_n_arithmetic)
+{
+    int32_t add32 = OBFY_N(40) + OBFY_N(2);
+    int32_t sub32 = OBFY_N(50) - OBFY_N(8);
+    int32_t mul32 = OBFY_N(6) * OBFY_N(7);
+    BOOST_CHECK_EQUAL(add32, 42);
+    BOOST_CHECK_EQUAL(sub32, 42);
+    BOOST_CHECK_EQUAL(mul32, 42);
+
+    int64_t add64 = OBFY_N(40LL) + OBFY_N(2LL);
+    int64_t sub64 = OBFY_N(50LL) - OBFY_N(8LL);
+    int64_t mul64 = OBFY_N(6LL) * OBFY_N(7LL);
+    BOOST_CHECK_EQUAL(add64, 42LL);
+    BOOST_CHECK_EQUAL(sub64, 42LL);
+    BOOST_CHECK_EQUAL(mul64, 42LL);
+}
+
 BOOST_AUTO_TEST_OBFY_CASE(ratio_and_bitcast)
 {
     double d = OBFY_RATIO_D(314, 100);
