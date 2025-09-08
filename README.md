@@ -117,6 +117,8 @@ cmake --install build --prefix /usr/local
 
 # Attacking the licensing problems with C++
 
+> This section originates from Ferenc Deak's work, with more details in his [original repository](https://github.com/fritzone/obfy) and [article](https://accu.org/journals/overload/24/135/overload135.pdf#page=22).
+
 From the early days of the commercialization of computer software, malicious programmers, also known as crackers have been continuously nettling the programmers of aforementioned software by constantly bypassing the clever licensing mechanisms they have implemented in their software, thus causing financial damages to the companies providing the software.
 
 This trend has not changed in recent years, the more clever routines the programmers write, the more time is spent by the crackers to invalidate the newly created routines, and at the end the crackers always succeed. For the companies to be able to keep up with the constant pressure provided by the cracking community they would need to constantly change the licensing and identification algorithms, but in practice this is not a feasible way to deal with the problem.
@@ -1349,15 +1351,13 @@ std::string generate_license(const char* user) {
 
 # References
 
-[Andrivet] - Random Generator by Sebastien Andrivet - https://github.com/andrivet/ADVobfuscator
-
-[Wakely] - Stop the Constant Shouting- Overload Journal #121 - June 2014, Jonathan Wakely
-
-[Stackoverflow] - http://stackoverflow.com/questions/12387239/reference-member-variables-as-class-members
+- [Andrivet] - Random Generator by Sebastien Andrivet - https://github.com/andrivet/ADVobfuscator
+- [Wakely] - Stop the Constant Shouting- Overload Journal #121 - June 2014, Jonathan Wakely
+- [Stackoverflow] - http://stackoverflow.com/questions/12387239/reference-member-variables-as-class-members
 
 # Related Projects
 
-- [ADVobfuscator](https://github.com/andrivet/ADVobfuscator) – original project this fork builds upon.
+- [ADVobfuscator](https://github.com/andrivet/ADVobfuscator) – compile-time obfuscation (C++20)
+- [obfy](https://github.com/fritzone/obfy) – original project this fork builds upon.
 - [aes-cpp](https://github.com/NewYaroslav/aes-cpp) – minimal AES implementation in C++.
 - [hmac-cpp](https://github.com/NewYaroslav/hmac-cpp) – HMAC routines for message authentication.
-
