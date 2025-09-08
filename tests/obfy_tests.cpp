@@ -13,6 +13,11 @@
 #include <stdint.h>
 #include <limits>
 #include <memory>
+#include <fstream>
+#include <iterator>
+#include <string>
+#include <cstdlib>
+#include <cstdio>
 
 template<template<class> class Extra, typename T>
 static void roundtrip(T value)
@@ -208,5 +213,45 @@ BOOST_AUTO_TEST_OBFY_CASE(obfuscated_call)
     int v = 1;
     OBFY_CALL(inc_obf, v);
     BOOST_CHECK_EQUAL(v, 2);
+}
+
+BOOST_AUTO_TEST_OBFY_CASE(string_obfuscation_binary_check)
+{
+    // determine project root from this file path
+    std::string file_path(__FILE__);
+    std::size_t pos = file_path.rfind("/tests/");
+    BOOST_REQUIRE(pos != std::string::npos);
+    std::string root = file_path.substr(0, pos);
+    std::string include_dir = root + "/include";
+
+    const char* narrow = "super_secret_narrow_literal";
+    const wchar_t* wide = L"super_secret_wide_literal";
+
+    const std::string src = std::string("/tmp/obfy_tmp_prog.cpp");
+    const std::string bin = std::string("/tmp/obfy_tmp_prog.bin");
+
+    {
+        std::ofstream ofs(src.c_str());
+        ofs << "#include <obfy/obfy_str.hpp>\n";
+        ofs << "int main(){\n";
+        ofs << "    volatile const char* s = OBFY_STR(\"" << narrow << "\"); (void)s;\n";
+        ofs << "    volatile const wchar_t* w = OBFY_WSTR(L\"super_secret_wide_literal\"); (void)w;\n";
+        ofs << "    return 0;\n";
+        ofs << "}\n";
+    }
+
+    std::string cmd = "g++ -std=c++11 -O2 -s -I" + include_dir + " " + src + " -o " + bin;
+    int ret = std::system(cmd.c_str());
+    BOOST_REQUIRE_EQUAL(ret, 0);
+
+    std::ifstream exe(bin.c_str(), std::ios::binary);
+    std::string content((std::istreambuf_iterator<char>(exe)), std::istreambuf_iterator<char>());
+
+    BOOST_CHECK(content.find(narrow) == std::string::npos);
+    std::string wide_bytes(reinterpret_cast<const char*>(wide), sizeof(L"super_secret_wide_literal") - sizeof(wchar_t));
+    BOOST_CHECK(content.find(wide_bytes) == std::string::npos);
+
+    std::remove(src.c_str());
+    std::remove(bin.c_str());
 }
 
