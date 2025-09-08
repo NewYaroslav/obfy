@@ -19,9 +19,11 @@ namespace detail {
     struct obf_string_impl<Char, K1, K2, K3, index_sequence<I...>> {
         alignas(Char) unsigned char data[sizeof...(I) + sizeof(Char)];
         mutable std::once_flag once_;
-        template<std::size_t N>
-        obf_string_impl(const Char (&s)[N])
-            : data{ encode(reinterpret_cast<const unsigned char*>(s)[I], I)... } {}
+        template<typename SChar, std::size_t N>
+        obf_string_impl(const SChar (&s)[N])
+            : data{ encode(reinterpret_cast<const unsigned char*>(s)[I], I)... } {
+            static_assert(sizeof(s[0]) == sizeof(Char), "string literal has wrong character width");
+        }
         static_assert((sizeof...(I) % sizeof(Char)) == 0, "byte count must be multiple of Char");
         const Char* decrypt() {
             std::call_once(once_, [&]{
