@@ -8,23 +8,32 @@ target_include_directories(obfy INTERFACE
 
 target_compile_features(obfy INTERFACE cxx_std_11)
 
-option(OBFY_BUILD_EXAMPLE "Build example program" ON)
+option(OBFY_BUILD_EXAMPLES "Build example programs" ON)
 option(OBFY_BUILD_TESTS "Build unit tests" ON)
 
-if(OBFY_BUILD_EXAMPLE)
-    add_executable(example example/main.cpp)
-    target_link_libraries(example PRIVATE obfy)
+if(OBFY_BUILD_EXAMPLES)
+    add_executable(obfy_example examples/obf.cpp)
+    target_link_libraries(obfy_example PRIVATE obfy)
+
+    add_executable(obfy_example_string examples/string.cpp)
+    target_link_libraries(obfy_example_string PRIVATE obfy)
+
+    add_executable(obfy_example_bytes examples/bytes.cpp)
+    target_link_libraries(obfy_example_bytes PRIVATE obfy)
+
+    add_executable(obfy_example_license examples/license.cpp)
+    target_link_libraries(obfy_example_license PRIVATE obfy)
 endif()
 
 if(OBFY_BUILD_TESTS)
     enable_testing()
     find_package(Boost REQUIRED COMPONENTS unit_test_framework)
-    add_executable(obfy_tests tests/obfy_tests.cpp tests/license_tests.cpp example/main.cpp)
+    add_executable(obfy_tests tests/obfy_tests.cpp tests/license_tests.cpp examples/obf.cpp)
     target_link_libraries(obfy_tests PRIVATE obfy Boost::unit_test_framework)
     target_compile_definitions(obfy_tests PRIVATE UNIT_TESTS)
     add_test(NAME obfy_tests COMMAND obfy_tests)
 
-    add_executable(obfy_tests_debug tests/obfy_tests.cpp tests/license_tests.cpp example/main.cpp)
+    add_executable(obfy_tests_debug tests/obfy_tests.cpp tests/license_tests.cpp examples/obf.cpp)
     target_link_libraries(obfy_tests_debug PRIVATE obfy Boost::unit_test_framework)
     target_compile_definitions(obfy_tests_debug PRIVATE UNIT_TESTS OBFY_DEBUG)
     add_test(NAME obfy_tests_debug COMMAND obfy_tests_debug)
