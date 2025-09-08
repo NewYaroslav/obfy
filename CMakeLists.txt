@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(obfy VERSION 1.0.0 LANGUAGES CXX)
 
+include(GNUInstallDirs)
+
 add_library(obfy INTERFACE)
 target_include_directories(obfy INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -61,17 +63,17 @@ write_basic_package_version_file(
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/obfyConfig.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/obfyConfig.cmake"
-    INSTALL_DESTINATION lib/cmake/obfy
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/obfy
 )
 
 install(EXPORT obfyTargets
     FILE obfyTargets.cmake
     NAMESPACE obfy::
-    DESTINATION lib/cmake/obfy
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/obfy
 )
 
 install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/obfyConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/obfyConfigVersion.cmake"
-    DESTINATION lib/cmake/obfy
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/obfy
 )
