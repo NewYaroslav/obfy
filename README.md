@@ -117,6 +117,23 @@ headers system-wide, use:
 cmake --install build --prefix /usr/local
 ```
 
+### vcpkg
+
+Install via [vcpkg](https://github.com/microsoft/vcpkg) using the provided
+overlay port:
+
+```bash
+vcpkg install obfy --overlay-ports=PATH/to/vcpkg-port
+```
+
+Then configure CMake with the vcpkg toolchain:
+
+```bash
+cmake -S . -B build \
+  -DCMAKE_TOOLCHAIN_FILE=PATH/to/vcpkg/scripts/buildsystems/vcpkg.cmake \
+  -DVCPKG_OVERLAY_PORTS=PATH/to/vcpkg-port
+```
+
 ### Known limitations
 - Macros may evaluate arguments more than once (avoid side effects).
 - `OBFY_N` works only with integral/enum constant expressions.
