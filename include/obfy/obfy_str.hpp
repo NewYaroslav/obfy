@@ -2,7 +2,6 @@
 #define __OBFY_STR_HPP__
 
 #include <cstddef>
-#include <cstdint>
 #include <mutex>
 #include <string>
 
@@ -25,7 +24,7 @@ namespace detail {
             static_assert(sizeof(s[0]) == sizeof(Char), "string literal has wrong character width");
         }
         static_assert((sizeof...(I) % sizeof(Char)) == 0, "byte count must be multiple of Char");
-        const Char* decrypt() {
+        inline const Char* decrypt() {
             std::call_once(once_, [&]{
                 for (std::size_t i = 0; i < sizeof...(I); ++i)
                     data[i] = decode(data[i], i);
@@ -34,11 +33,11 @@ namespace detail {
         }
         struct tmp_string {
             std::basic_string<Char> str;
-            ~tmp_string() { for (std::size_t i = 0; i < str.size(); ++i) str[i] = Char(); }
-            operator const std::basic_string<Char>&() const { return str; }
-            const Char* c_str() const { return str.c_str(); } // valid while tmp_string lives
+            inline ~tmp_string() { for (std::size_t i = 0; i < str.size(); ++i) str[i] = Char(); }
+            inline operator const std::basic_string<Char>&() const { return str; }
+            inline const Char* c_str() const { return str.c_str(); } // valid while tmp_string lives
         };
-        tmp_string decrypt_once() const {
+        inline tmp_string decrypt_once() const {
             tmp_string tmp;
             tmp.str.resize(sizeof...(I) / sizeof(Char));
             unsigned char* raw = reinterpret_cast<unsigned char*>(&tmp.str[0]);
