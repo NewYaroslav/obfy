@@ -14,6 +14,10 @@ auto tmp = OBFY_STR_ONCE("one-shot");
 auto wtmp = OBFY_WSTR_ONCE(L"w-one-shot");
 ```
 
+These macros accept only string literals whose character type matches the macro.
+Using a wide literal with `OBFY_STR` or a narrow literal with `OBFY_WSTR`
+results in a compilation error.
+
 `*_ONCE` macros return a temporary that zeroes its storage on destruction. Pointers from `c_str()` remain valid only within the full expression; copy the string if a longer lifetime is required.
 
 ## Byte block obfuscation

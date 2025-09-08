@@ -28,6 +28,14 @@ if(OBFY_BUILD_TESTS)
     target_link_libraries(obfy_tests_debug PRIVATE obfy Boost::unit_test_framework)
     target_compile_definitions(obfy_tests_debug PRIVATE UNIT_TESTS OBFY_DEBUG)
     add_test(NAME obfy_tests_debug COMMAND obfy_tests_debug)
+
+    add_test(NAME invalid_str_literal
+        COMMAND ${CMAKE_CXX_COMPILER} -std=c++11 -I${CMAKE_CURRENT_SOURCE_DIR}/include -c ${CMAKE_CURRENT_SOURCE_DIR}/tests/invalid_str_char.cpp -o invalid_str_char.o)
+    set_tests_properties(invalid_str_literal PROPERTIES WILL_FAIL TRUE)
+
+    add_test(NAME invalid_wstr_literal
+        COMMAND ${CMAKE_CXX_COMPILER} -std=c++11 -I${CMAKE_CURRENT_SOURCE_DIR}/include -c ${CMAKE_CURRENT_SOURCE_DIR}/tests/invalid_wstr_char.cpp -o invalid_wstr_char.o)
+    set_tests_properties(invalid_wstr_literal PROPERTIES WILL_FAIL TRUE)
 endif()
 
 install(TARGETS obfy)
