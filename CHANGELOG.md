@@ -9,4 +9,7 @@ All notable changes to this project will be documented in this file.
 - Introduced numeric and control-flow obfuscation wrappers.
 - Renamed multiple macros for clarity and consistency.
 - Added obfuscated byte block macros `OBFY_BYTES` and `OBFY_BYTES_ONCE`.
+- Added: `OBFY_STR/OBFY_WSTR`, `OBFY_BYTES/OBFY_BYTES_ONCE`
+- Improved: TU-salt, runtime tweak
+- Fixed: `refholder::operator==` constraints
 
