@@ -19,6 +19,13 @@ of protection.
 
 ## Quick Start
 
+Using an installed package:
+
+```cmake
+find_package(obfy CONFIG REQUIRED)
+target_link_libraries(your-target PRIVATE obfy::obfy)
+```
+
 Add the library to your CMake project:
 
 ```cmake
