@@ -12,8 +12,9 @@ if [ -n "${VCPKG_ROOT:-}" ]; then
   if [ -n "${VCPKG_OVERLAY_PORTS:-}" ]; then
     INSTALL_OPTS+=("--overlay-ports=${VCPKG_OVERLAY_PORTS}")
   fi
-  "${VCPKG_ROOT}/vcpkg" install obfy "${INSTALL_OPTS[@]}"
-  CMAKE_FLAGS+=("-DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+  TRIPLET=x64-linux-dynamic
+  "${VCPKG_ROOT}/vcpkg" install obfy boost-test --triplet ${TRIPLET} "${INSTALL_OPTS[@]}"
+  CMAKE_FLAGS+=("-DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=${TRIPLET}")
 fi
 
 cmake -S . -B build "${CMAKE_FLAGS[@]}"
