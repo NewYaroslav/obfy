@@ -254,6 +254,8 @@ BOOST_AUTO_TEST_OBFY_CASE(string_obfuscation_binary_check)
     // determine project root from this file path
     std::string file_path(__FILE__);
     std::size_t pos = file_path.rfind("/tests/");
+    if(pos == std::string::npos)
+        pos = file_path.rfind("\\tests\\");
     BOOST_REQUIRE(pos != std::string::npos);
     std::string root = file_path.substr(0, pos);
     std::string include_dir = root + "/include";
