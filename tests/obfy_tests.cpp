@@ -159,14 +159,31 @@ BOOST_AUTO_TEST_OBFY_CASE(string_literal)
 
 BOOST_AUTO_TEST_OBFY_CASE(byte_block)
 {
-    const unsigned char* data = OBFY_BYTES("\x01\x02\x03\x04");
-    BOOST_CHECK_EQUAL(data[0], 0x01);
-    BOOST_CHECK_EQUAL(data[3], 0x04);
+    OBFY_DEF_BYTES("\x01\x02\x03\x04") block4{"\x01\x02\x03\x04"};
+    BOOST_CHECK_EQUAL(decltype(block4)::size_static(), 4u);
+    BOOST_CHECK_EQUAL(block4.size(), 4u);
+    const unsigned char* data4 = OBFY_BYTES("\x01\x02\x03\x04");
+    BOOST_CHECK_EQUAL(data4[0], 0x01);
+    BOOST_CHECK_EQUAL(data4[3], 0x04);
 
-    auto once = OBFY_BYTES_ONCE("\x05\x06");
-    BOOST_CHECK_EQUAL(once.size(), 2u);
-    BOOST_CHECK_EQUAL(once.data()[0], 0x05);
-    BOOST_CHECK_EQUAL(once.data()[1], 0x06);
+    OBFY_DEF_BYTES("\x07") block1{"\x07"};
+    BOOST_CHECK_EQUAL(decltype(block1)::size_static(), 1u);
+    BOOST_CHECK_EQUAL(block1.size(), 1u);
+    const unsigned char* data1 = OBFY_BYTES("\x07");
+    BOOST_CHECK_EQUAL(data1[0], 0x07);
+
+    const unsigned char* wiped = nullptr;
+    {
+        auto once = OBFY_BYTES_ONCE("\x05\x06\x07");
+        BOOST_CHECK_EQUAL(once.size(), 3u);
+        wiped = once.data();
+        BOOST_CHECK_EQUAL(wiped[0], 0x05);
+        BOOST_CHECK_EQUAL(wiped[1], 0x06);
+        BOOST_CHECK_EQUAL(wiped[2], 0x07);
+    }
+    BOOST_CHECK_EQUAL(wiped[0], 0u);
+    BOOST_CHECK_EQUAL(wiped[1], 0u);
+    BOOST_CHECK_EQUAL(wiped[2], 0u);
 }
 
 BOOST_AUTO_TEST_OBFY_CASE(float_variable_wrapper)
