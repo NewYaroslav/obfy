@@ -60,6 +60,12 @@ target_link_libraries(your-target PRIVATE obfy)
 - `OBFY_DISABLE_RUNTIME_TWEAK` – turn off runtime seed tweaks (enabled by default).
 - `OBFY_MAX_BOGUS_IMPLEMENTATIONS` – number of bogus branches when wrapping values.
 
+### Build configuration consistency
+
+Because the library is header-only and relies on macros to shape inline code, **all translation units must be built with identical compiler settings**.
+Mixing different C++ standard levels or toggling macros such as `OBFY_DEBUG`, `OBFY_DISABLE_RUNTIME_TWEAK`, or `OBFY_ENABLE_FSM_CALL` across translation units changes inline function bodies and violates the One Definition Rule (ODR).
+Ensure the same macro definitions, packing options, and standard flags are passed to every target that includes OBFY headers.
+
 ### Examples
 
 Reproducible build:
